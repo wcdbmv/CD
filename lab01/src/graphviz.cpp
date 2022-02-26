@@ -5,7 +5,7 @@
 
 namespace {
 
-std::string convertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
+std::string sConvertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
 	if (!root) {
 		return "";
 	}
@@ -22,8 +22,8 @@ std::string convertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
 		stream << "\t}\n\n";
 	}
 
-	stream << convertToDotFormatInternal(root->left);
-	stream << convertToDotFormatInternal(root->right);
+	stream << sConvertToDotFormatInternal(root->left);
+	stream << sConvertToDotFormatInternal(root->right);
 
 	return stream.str();
 }
@@ -32,7 +32,7 @@ std::string convertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
 
 
 std::string convertToDotFormat(AbstractSyntaxTreeNode* root) {
-	return "graph AST {\n" + convertToDotFormatInternal(root) + "}\n";
+	return "graph AST {\n" + sConvertToDotFormatInternal(root) + "}\n";
 };
 
 std::string generateLinkToGraphvizOnline(AbstractSyntaxTreeNode* root) {

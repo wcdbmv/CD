@@ -14,7 +14,7 @@ public:
 private:
 	AbstractSyntaxTreeNode* root_;
 
-	std::unordered_map<AbstractSyntaxTreeNode*, size_t> leaf_to_index_;
+	std::unordered_map<AbstractSyntaxTreeNode*, size_t> leaf_to_index_;  // TODO: delete indices and use pointers
 	std::unordered_map<size_t, AbstractSyntaxTreeNode*> index_to_leaf_;
 	std::unordered_map<AbstractSyntaxTreeNode*, bool> nullable_;
 	std::unordered_map<AbstractSyntaxTreeNode*, std::set<size_t>> first_pos_;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 
 template <typename T>
 struct BinaryTreeNode {
@@ -9,5 +11,23 @@ struct BinaryTreeNode {
 
 	bool isLeaf() const {
 		return !left && !right;
+	}
+
+	using Callback = std::function<void(BinaryTreeNode*)>;
+
+	void applyToChildren(const Callback& callback) {
+		for (auto child : {left, right}) {
+			if (child) {
+				callback(child);
+			}
+		}
+	}
+
+	static void clear(BinaryTreeNode* node) {
+		if (node->isLeaf()) {
+			delete node;
+			return;
+		}
+		node->applyToChildren(clear);
 	}
 };

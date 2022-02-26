@@ -1,10 +1,6 @@
 #pragma once
 
-#include <cstddef>
-#include <set>
-#include <unordered_map>
-
-#include <abstract_syntax_tree_node.hpp>
+#include <abstract_syntax_tree.hpp>
 
 
 class DeterministicFiniteAutomaton {

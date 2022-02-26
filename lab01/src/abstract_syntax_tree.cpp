@@ -17,6 +17,35 @@ std::set<T> sSetUnion(const std::set<T>& a, const std::set<T>& b) {
 	return result;
 }
 
+using CallbackRef = const AbstractSyntaxTreeNode::Callback&;
+
+void sDummyCallback(AbstractSyntaxTreeNode*) {}
+
+void sTraverse(AbstractSyntaxTreeNode* node,
+               CallbackRef onLeaf = sDummyCallback,
+               CallbackRef onChild = sDummyCallback,
+               CallbackRef onOr = sDummyCallback,
+               CallbackRef onCat = sDummyCallback,
+               CallbackRef onStar = sDummyCallback) {
+
+	if (node->isLeaf()) {
+		onLeaf(node);
+		return;
+	}
+
+	node->applyToChildren(onChild);
+
+	if (node->data == '|') {
+		onOr(node);
+	} else if (node->data == '&') {
+		onCat(node);
+	} else if (node->data == '*') {
+		onStar(node);
+	} else {
+		throw std::invalid_argument("[<anonymous namespace>::sTraverse] Unexpected AbstractSyntaxTreeNode");
+	}
+}
+
 }  // namespace
 
 
@@ -34,123 +63,93 @@ AbstractSyntaxTree::AbstractSyntaxTree(AbstractSyntaxTreeNode* root)
 	calculateFirstPos_(root_);
 	calculateLastPos_(root_);
 	calculateFollowPos_(root_);
-	return;
+
 }
 
 void AbstractSyntaxTree::numerateLeaves_(AbstractSyntaxTreeNode* node, size_t& i) {
-	if (node->isLeaf()) {
-		leaf_to_index_[node] = i;
-		index_to_leaf_[i] = node;
-		++i;
-		return;
-	}
-
-	for (auto* child : {node->left, node->right}) {
-		if (child) {
-			numerateLeaves_(child, i);
-		}
-	}
+	sTraverse(
+		node,
+		[&](auto* node) {
+			leaf_to_index_[node] = i;
+			index_to_leaf_[i] = node;
+			++i;
+		},
+		[&](auto* child) { numerateLeaves_(child, i); }
+	);
 }
 
 void AbstractSyntaxTree::calculateNullable_(AbstractSyntaxTreeNode* node) {
-	if (node->isLeaf()) {
-		nullable_[node] = node->data == 'E';
-		return;
-	}
-
-	for (auto* child : {node->left, node->right}) {
-		if (child) {
-			calculateNullable_(child);
-		}
-	}
-
-	if (node->data == '|') {
-		nullable_[node] = nullable_[node->left] || nullable_[node->right];
-	} else if (node->data == '&') {
-		nullable_[node] = nullable_[node->left] && nullable_[node->right];
-	} else if (node->data == '*') {
-		nullable_[node] = true;
-	} else {
-		throw std::invalid_argument("[AbstractSyntaxTree::calculateNullable_] Unexpected AbstractSyntaxTreeNode");
-	}
+	sTraverse(
+		node,
+		[&](auto* node) { nullable_[node] = node->data == 'E'; },
+		[&](auto* child) { calculateNullable_(child); },
+		[&](auto* node) { nullable_[node] = nullable_[node->left] || nullable_[node->right]; },
+		[&](auto* node) { nullable_[node] = nullable_[node->left] && nullable_[node->right]; },
+		[&](auto* node) { nullable_[node] = true; }
+	);
 }
 
 void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
-	if (node->isLeaf()) {
-		if (node->data == 'E') {
-			first_pos_[node] = {};
-		} else {
-			first_pos_[node] = {leaf_to_index_[node]};
-		}
-		return;
-	}
-
-	for (auto* child : {node->left, node->right}) {
-		if (child) {
-			calculateFirstPos_(child);
-		}
-	}
-
-	if (node->data == '|') {
-		first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]);
-	} else if (node->data == '&') {
-		if (nullable_[node->left]) {
-			first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]);
-		} else {
-			first_pos_[node] = first_pos_[node->left];
-		}
-	} else if (node->data == '*') {
-		first_pos_[node] = first_pos_[node->left];
-	} else {
-		throw std::invalid_argument("[AbstractSyntaxTree::calculateFirstPos_] Unexpected AbstractSyntaxTreeNode");
-	}
+	sTraverse(
+		node,
+		[&](auto* node) {
+			if (node->data == 'E') {
+				first_pos_[node] = {};
+			} else {
+				first_pos_[node] = {leaf_to_index_[node]};
+			}
+		},
+		[&](auto* child) { calculateFirstPos_(child); },
+		[&](auto* node) { first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]); },
+		[&](auto* node) {
+			if (nullable_[node->left]) {
+				first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]);
+			} else {
+				first_pos_[node] = first_pos_[node->left];
+			}
+		},
+		[&](auto* node) { first_pos_[node] = first_pos_[node->left]; }
+	);
 }
 
 void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
-	if (node->isLeaf()) {
-		if (node->data == 'E') {
-			last_pos_[node] = {};
-		} else {
-			last_pos_[node] = {leaf_to_index_[node]};
-		}
-		return;
-	}
-
-	for (auto* child : {node->left, node->right}) {
-		if (child) {
-			calculateLastPos_(child);
-		}
-	}
-
-	if (node->data == '|') {
-		last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]);
-	} else if (node->data == '&') {
-		if (nullable_[node->right]) {
-			last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]);
-		} else {
-			last_pos_[node] = last_pos_[node->right];
-		}
-	} else if (node->data == '*') {
-		last_pos_[node] = last_pos_[node->left];
-	} else {
-		throw std::invalid_argument("[AbstractSyntaxTree::calculateLastPos_] Unexpected AbstractSyntaxTreeNode");
-	}
+	sTraverse(
+		node,
+		[&](auto* node) {
+			if (node->data == 'E') {
+				last_pos_[node] = {};
+			} else {
+				last_pos_[node] = {leaf_to_index_[node]};
+			}
+		},
+		[&](auto* child) { calculateLastPos_(child); },
+		[&](auto* node) { last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]); },
+		[&](auto* node) {
+			if (nullable_[node->right]) {
+				last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]);
+			} else {
+				last_pos_[node] = last_pos_[node->right];
+			}
+		},
+		[&](auto* node) { last_pos_[node] = last_pos_[node->left]; }
+	);
 }
 
 void AbstractSyntaxTree::calculateFollowPos_(AbstractSyntaxTreeNode* node) {
-	for (auto* child : {node->left, node->right}) {
-		if (child) {
-			calculateFollowPos_(child);
+	sTraverse(
+		node,
+		sDummyCallback,
+		[&](auto* child) { calculateFollowPos_(child); },
+		sDummyCallback,
+		[&](auto* child) {
+			for (auto i : last_pos_[node->left]) {
+				sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
+			}
+		},
+		[&](auto* child) {
+			for (auto i : last_pos_[node]) {
+				sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
+			}
 		}
-	}
-
-	if (node->data == '&') {
-		for (auto i : last_pos_[node->left]) {
-			sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
-		}
-	} else if (node->data == '*') {
-		for (auto i : last_pos_[node]) {
-			sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
-		}
-	}
+	);
 }

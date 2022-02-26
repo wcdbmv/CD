@@ -17,19 +17,6 @@ void sPrint(BinaryTreeNode<T>* root, int i = 0) {
 	}
 }
 
-template <typename T>
-void sDelete(BinaryTreeNode<T>* root) {
-	if (root->isLeaf()) {
-		delete root;
-		return;
-	}
-	for (auto child : {root->left, root->right}) {
-		if (child) {
-			sDelete(child);
-		}
-	}
-}
-
 
 int main() {
 	RecursiveDescentParser parser;
@@ -37,6 +24,6 @@ int main() {
 	std::cout << generateLinkToGraphvizOnline(root);
 	AbstractSyntaxTree ast(root);
 
-	sDelete(root);
+	AbstractSyntaxTreeNode::clear(root);
 	return 0;
 }
