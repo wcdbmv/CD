@@ -1,21 +1,13 @@
 #include <abstract_syntax_tree.hpp>
 
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
+
+#include <set_union.hpp>
 
 
 namespace {
-
-template <typename T>
-void sSetAppend(std::set<T>& a, const std::set<T>& b) {
-	a.insert(b.begin(), b.end());
-}
-
-template <typename T>
-std::set<T> sSetUnion(const std::set<T>& a, const std::set<T>& b) {
-	auto result = a;
-	sSetAppend(result, b);
-	return result;
-}
 
 using CallbackRef = const AbstractSyntaxTreeNode::Callback&;
 
@@ -46,6 +38,29 @@ void sTraverse(AbstractSyntaxTreeNode* node,
 	}
 }
 
+std::string sConvertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
+	if (!root) {
+		return "";
+	}
+
+	std::stringstream stream;
+	stream << "\t\"" << std::hex << reinterpret_cast<void*>(root) << "\" [label=\"" << root->data << "\"]\n";
+	if (root->left || root->right) {
+		stream << "\t\"" << std::hex << reinterpret_cast<void*>(root) << "\" -- {\n";
+		for (auto* child : {root->left, root->right}) {
+			if (child) {
+				stream << "\t\t\"" << std::hex << reinterpret_cast<void*>(child) << "\"\n";
+			}
+		}
+		stream << "\t}\n\n";
+	}
+
+	stream << sConvertToDotFormatInternal(root->left);
+	stream << sConvertToDotFormatInternal(root->right);
+
+	return stream.str();
+}
+
 }  // namespace
 
 
@@ -63,7 +78,10 @@ AbstractSyntaxTree::AbstractSyntaxTree(AbstractSyntaxTreeNode* root)
 	calculateFirstPos_(root_);
 	calculateLastPos_(root_);
 	calculateFollowPos_(root_);
+}
 
+AbstractSyntaxTree::~AbstractSyntaxTree() {
+	AbstractSyntaxTreeNode::clear(root_);
 }
 
 void AbstractSyntaxTree::numerateLeaves_(AbstractSyntaxTreeNode* node, size_t& i) {
@@ -100,10 +118,10 @@ void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateFirstPos_(child); },
-		[&](auto* node) { first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]); },
+		[&](auto* node) { first_pos_[node] = set_union(first_pos_[node->left], first_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->left]) {
-				first_pos_[node] = sSetUnion(first_pos_[node->left], first_pos_[node->right]);
+				first_pos_[node] = set_union(first_pos_[node->left], first_pos_[node->right]);
 			} else {
 				first_pos_[node] = first_pos_[node->left];
 			}
@@ -123,10 +141,10 @@ void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateLastPos_(child); },
-		[&](auto* node) { last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]); },
+		[&](auto* node) { last_pos_[node] = set_union(last_pos_[node->left], last_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->right]) {
-				last_pos_[node] = sSetUnion(last_pos_[node->left], last_pos_[node->right]);
+				last_pos_[node] = set_union(last_pos_[node->left], last_pos_[node->right]);
 			} else {
 				last_pos_[node] = last_pos_[node->right];
 			}
@@ -141,15 +159,19 @@ void AbstractSyntaxTree::calculateFollowPos_(AbstractSyntaxTreeNode* node) {
 		sDummyCallback,
 		[&](auto* child) { calculateFollowPos_(child); },
 		sDummyCallback,
-		[&](auto* child) {
+		[&](auto* node) {
 			for (auto i : last_pos_[node->left]) {
-				sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
+				set_append(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
 			}
 		},
-		[&](auto* child) {
+		[&](auto* node) {
 			for (auto i : last_pos_[node]) {
-				sSetAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
+				set_append(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
 			}
 		}
 	);
+}
+
+std::string AbstractSyntaxTree::convertToDotFormat() const {
+	return "graph AST {\n" + sConvertToDotFormatInternal(root_) + "}\n";
 }

@@ -1,9 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
-#include <abstract_syntax_tree_node.hpp>
 
-
-std::string convertToDotFormat(AbstractSyntaxTreeNode* root);
-std::string generateLinkToGraphvizOnline(AbstractSyntaxTreeNode* root);
+std::string generateLinkToGraphvizOnline(std::string_view dot);

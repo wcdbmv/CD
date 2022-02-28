@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <set>
+#include <string>
 #include <unordered_map>
 
 #include <abstract_syntax_tree_node.hpp>
@@ -10,6 +11,17 @@
 class AbstractSyntaxTree {
 public:
 	explicit AbstractSyntaxTree(AbstractSyntaxTreeNode* root);
+	~AbstractSyntaxTree();
+
+	auto& root() { return root_; }
+	auto& leafToIndex() { return leaf_to_index_; };
+	auto& indexToLeaf() { return index_to_leaf_; };
+	auto& nullable() { return nullable_; }
+	auto& firstPos() { return first_pos_; }
+	auto& lastPos() { return last_pos_; }
+	auto& followPos() { return follow_pos_; }
+
+	std::string convertToDotFormat() const;
 
 private:
 	AbstractSyntaxTreeNode* root_;
