@@ -9,28 +9,10 @@
 #include <hash_combine.hpp>
 
 
-struct State {
-	std::string id;
-	std::set<size_t> indices;
-
-	bool operator==(const State&) const = default;
-};
-
-template<>
-struct std::hash<State> {
-	std::size_t operator()(const State& state) const noexcept {
-		auto h1 = std::hash<std::string>{}(state.id);
-		auto h2 = hash_container(state.indices);
-		hash_combine(h1, h2);
-		return h1;
-	}
-};
-
-std::ostream& operator<<(std::ostream& os, const State& state);
-
-
 class DeterministicFiniteAutomaton {
 public:
+	using State = std::string;
+
 	explicit DeterministicFiniteAutomaton(std::string_view expression);
 
 	void AddState(const State& state);

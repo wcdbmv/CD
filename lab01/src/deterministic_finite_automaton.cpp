@@ -58,14 +58,6 @@ AbstractSyntaxTreeNode* sFindAcceptNode(AbstractSyntaxTreeNode* node) {
 }  // namespace
 
 
-std::ostream& operator<<(std::ostream& os, const State& state) {
-	os << "State(id=\"" << state.id << "\", indices=";
-	std::copy(state.indices.begin(), state.indices.end(), std::experimental::make_ostream_joiner(os, " "));
-	os << "})";
-	return os;
-}
-
-
 DeterministicFiniteAutomaton::DeterministicFiniteAutomaton(std::string_view expression)
 	: root_{RecursiveDescentParser{}.parse("(" + std::string(expression) + ")#")}
 	, ast_{root_}
@@ -76,38 +68,38 @@ DeterministicFiniteAutomaton::DeterministicFiniteAutomaton(std::string_view expr
 	auto& first_pos = ast_.firstPos();
 	auto& follow_pos = ast_.followPos();
 
-	std::unordered_set<State> non_visited;
-
-	initial_state_ = State{sToString(first_pos[root_]), first_pos[root_]};
-	states_.insert(initial_state_);
-	non_visited.insert(initial_state_);
-
-	while (!non_visited.empty()) {
-		State s = *non_visited.begin();
-		non_visited.erase(non_visited.begin());
-		for (auto a : alphabet_) {
-			State u;
-			for (auto p : s.indices) {
-				auto* p_leaf = index_to_leaf[p];
-				if (p_leaf->data == a) {
-					set_append(u.indices, follow_pos[p_leaf]);
-				}
-			}
-			u.id = sToString(u.indices);
-			if (!states_.contains(u)) {
-				states_.insert(u);
-				non_visited.insert(u);
-			}
-			transitions_[s][a] = u;
-		}
-	}
-
 	auto* accept_node = sFindAcceptNode(root_);
 	auto accept_node_index = leaf_to_index[accept_node];
 
-	for (auto&& state : states_) {
-		if (state.indices.contains(accept_node_index)) {
-			accept_states_.insert(state);
+	std::set<std::set<size_t>> non_visited;
+
+	initial_state_ = sToString(first_pos[root_]);
+	states_.insert(initial_state_);
+	non_visited.insert(first_pos[root_]);
+	if (first_pos[root_].contains(accept_node_index)) {
+		accept_states_.insert(initial_state_);
+	}
+
+	while (!non_visited.empty()) {
+		auto s = *non_visited.begin();
+		non_visited.erase(non_visited.begin());
+		for (auto a : alphabet_) {
+			std::set<size_t> u;
+			for (auto p : s) {
+				auto* p_leaf = index_to_leaf[p];
+				if (p_leaf->data == a) {
+					set_append(u, follow_pos[p_leaf]);
+				}
+			}
+			auto u_str = sToString(u);
+			if (!states_.contains(u_str)) {
+				states_.insert(u_str);
+				if (u.contains(accept_node_index)) {
+					accept_states_.insert(u_str);
+				}
+				non_visited.insert(u);
+			}
+			transitions_[sToString(s)][a] = u_str;
 		}
 	}
 }
@@ -161,7 +153,7 @@ std::string DeterministicFiniteAutomaton::convertDfaToDotFormat() const {
 		if (initial_state_ == state) {
 			s += "\"\" -> ";
 		}
-		s += "\"" + state.id + "\"";
+		s += "\"" + state + "\"";
 		if (accept_states_.contains(state)) {
 			s += " [peripheries=2]";
 		}
@@ -171,7 +163,7 @@ std::string DeterministicFiniteAutomaton::convertDfaToDotFormat() const {
 
 	for (auto&& [from, map_symbol_to_state] : transitions_) {
 		for (auto&& [symbol, to] : map_symbol_to_state) {
-			s += "\t\"" + from.id + "\" -> \"" + to.id + "\" [label=\"" + symbol + "\"]\n";
+			s += "\t\"" + from + "\" -> \"" + to + "\" [label=\"" + symbol + "\"]\n";
 		}
 	}
 
