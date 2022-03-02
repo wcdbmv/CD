@@ -24,10 +24,7 @@ struct BinaryTreeNode {
 	}
 
 	static void clear(BinaryTreeNode* node) {
-		if (node->isLeaf()) {
-			delete node;
-			return;
-		}
 		node->applyToChildren(clear);
+		delete node;
 	}
 };

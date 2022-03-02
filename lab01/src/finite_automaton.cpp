@@ -3,7 +3,6 @@
 #include <stdexcept>
 
 #include <set_utils.hpp>
-#include <utility>
 
 
 namespace {
@@ -79,26 +78,6 @@ void FiniteAutomaton::createInitialState_(const States& initial_states) {
 	}
 }
 
-auto FiniteAutomaton::states() const -> const States& {
-	return states_;
-}
-
-auto FiniteAutomaton::alphabet() const -> const Alphabet& {
-	return alphabet_;
-}
-
-auto FiniteAutomaton::transitions() const -> const Transitions& {
-	return transitions_;
-}
-
-auto FiniteAutomaton::initial_state() const -> const State& {
-	return initial_state_;
-}
-
-auto FiniteAutomaton::accept_states() const -> const States& {
-	return accept_states_;
-}
-
 auto FiniteAutomaton::transition(const State& from, Symbol symbol) const -> States {
 	if (auto it_from = transitions_.find(from); it_from != transitions_.end()) {
 		if (auto it = it_from->second.find(symbol); it != it_from->second.end()) {
@@ -122,7 +101,7 @@ void FiniteAutomaton::reverse() {
 
 	auto tmp = std::move(initial_state_);
 	if (accept_states_.size() == 1) {
-		initial_state_ = popFirst(accept_states_);
+		initial_state_ = Set::popFirst(accept_states_);
 		accept_states_.insert(std::move(tmp));
 	} else {
 		createInitialState_(accept_states_);
@@ -179,15 +158,15 @@ void FiniteAutomaton::deleteUnreachableStates() {
 	States need_to_visit = {fa.initial_state_};
 
 	while (!need_to_visit.empty()) {
-		auto state = popFirst(need_to_visit);
+		auto state = Set::popFirst(need_to_visit);
 		visited.insert(state);
 
 		for (auto symbol : alphabet) {
-			setAppend(need_to_visit, setDifference(fa.transition(state, symbol), visited));
+			Set::append(need_to_visit, Set::difference(fa.transition(state, symbol), visited));
 		}
 	}
 
-	for (auto&& unreachable : setDifference(fa.states_, visited)) {
+	for (auto&& unreachable : Set::difference(fa.states_, visited)) {
 		deleteState(unreachable);
 	}
 }
@@ -203,7 +182,7 @@ void FiniteAutomaton::deleteState(const State& state) {
 	if (initial_state_ == state) {
 		FiniteAutomaton::States initial_states;
 		for (auto&& [symbol, to_states] : transitions_[state]) {
-			setAppend(initial_states, to_states);
+			Set::append(initial_states, to_states);
 		}
 		if (!initial_states.empty()) {
 			createInitialState_(initial_states);

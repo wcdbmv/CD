@@ -38,6 +38,22 @@ void sTraverse(AbstractSyntaxTreeNode* node,
 	}
 }
 
+AbstractSyntaxTreeNode* sFindLeaf(AbstractSyntaxTreeNode* node, char data) {
+	if (node->isLeaf()) {
+		return node->data == data ? node : nullptr;
+	}
+
+	for (auto child : {node->left, node->right}) {
+		if (child) {
+			if (auto accept_node = sFindLeaf(child, data); accept_node) {
+				return accept_node;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 std::string sConvertToDotFormatInternal(AbstractSyntaxTreeNode* root) {
 	if (!root) {
 		return "";
@@ -118,10 +134,10 @@ void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateFirstPos_(child); },
-		[&](auto* node) { first_pos_[node] = setUnion(first_pos_[node->left], first_pos_[node->right]); },
+		[&](auto* node) { first_pos_[node] = Set::Union(first_pos_[node->left], first_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->left]) {
-				first_pos_[node] = setUnion(first_pos_[node->left], first_pos_[node->right]);
+				first_pos_[node] = Set::Union(first_pos_[node->left], first_pos_[node->right]);
 			} else {
 				first_pos_[node] = first_pos_[node->left];
 			}
@@ -141,10 +157,10 @@ void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateLastPos_(child); },
-		[&](auto* node) { last_pos_[node] = setUnion(last_pos_[node->left], last_pos_[node->right]); },
+		[&](auto* node) { last_pos_[node] = Set::Union(last_pos_[node->left], last_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->right]) {
-				last_pos_[node] = setUnion(last_pos_[node->left], last_pos_[node->right]);
+				last_pos_[node] = Set::Union(last_pos_[node->left], last_pos_[node->right]);
 			} else {
 				last_pos_[node] = last_pos_[node->right];
 			}
@@ -161,15 +177,19 @@ void AbstractSyntaxTree::calculateFollowPos_(AbstractSyntaxTreeNode* node) {
 		sDummyCallback,
 		[&](auto* node) {
 			for (auto i : last_pos_[node->left]) {
-				setAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
+				Set::append(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
 			}
 		},
 		[&](auto* node) {
 			for (auto i : last_pos_[node]) {
-				setAppend(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
+				Set::append(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
 			}
 		}
 	);
+}
+
+AbstractSyntaxTreeNode* AbstractSyntaxTree::findLeaf(char data) {
+	return sFindLeaf(root_, data);
 }
 
 std::string AbstractSyntaxTree::convertToDotFormat() const {

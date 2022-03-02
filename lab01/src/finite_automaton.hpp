@@ -30,11 +30,11 @@ public:
 		States accept_states = {}
 	);
 
-	const States& states() const;
-	const Alphabet& alphabet() const;
-	const Transitions& transitions() const;
-	const State& initial_state() const;
-	const States& accept_states() const;
+	const States& states() const { return states_; }
+	const Alphabet& alphabet() const { return alphabet_; }
+	const Transitions& transitions() const { return transitions_; }
+	const State& initial_state() const { return initial_state_; }
+	const States& accept_states() const { return accept_states_; }
 
 	States transition(const State& from, Symbol symbol) const;
 

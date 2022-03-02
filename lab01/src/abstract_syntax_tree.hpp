@@ -21,6 +21,8 @@ public:
 	auto& lastPos() { return last_pos_; }
 	auto& followPos() { return follow_pos_; }
 
+	AbstractSyntaxTreeNode* findLeaf(char data);
+
 	std::string convertToDotFormat() const;
 
 private:

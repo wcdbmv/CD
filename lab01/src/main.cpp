@@ -5,9 +5,9 @@
 
 
 int main() {
-	//DeterministicFiniteAutomaton dfa("(a|b)*abb");
+	DeterministicFiniteAutomaton dfa("(a|b)*abb");
 	//DeterministicFiniteAutomaton dfa("(a|b)*abb**(aa|b*a*|ab*)*");
-	FiniteAutomaton fa(
+	/*FiniteAutomaton fa(
 		{"0", "1", "2", "3"},
 		{'a', 'b'},
 		{
@@ -17,7 +17,7 @@ int main() {
 		},
 		"0",
 		{"3"}
-		);
+	);*/
 	/*FiniteAutomaton fa(
 		{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
 		{'a', 'b'},
@@ -36,12 +36,12 @@ int main() {
 		"0",
 		{"10"}
 	);*/
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	auto fa = dfa.reversed();
 	std::cout << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
 
-	fa.reverse();
-	std::cout << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
-
-	auto dfa = DeterministicFiniteAutomaton(fa);
+	dfa = DeterministicFiniteAutomaton(fa);
 	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
 
 	dfa.rename();
@@ -55,4 +55,17 @@ int main() {
 
 	dfa.rename();
 	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	while (true) {
+		std::cout << ">>> ";
+
+		std::string s;
+		std::cin >> s;
+
+		if (s == "exit") {
+			break;
+		}
+
+		std::cout << dfa.accept(s) << std::endl;
+	}
 }

@@ -1,9 +1,7 @@
 #include <deterministic_finite_automaton.hpp>
 
 #include <experimental/iterator>
-#include <sstream>
 #include <stack>
-#include <queue>
 
 #include <recursive_descent_parser.hpp>
 #include <set_utils.hpp>
@@ -11,25 +9,10 @@
 
 namespace {
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::set<T>& set) {
-	os << "{";
-	std::copy(set.begin(), set.end(), std::experimental::make_ostream_joiner(os, ", "));
-	os << "}";
-	return os;
-}
-
-std::string sToString(const auto& data) {
-	std::stringstream ss;
-	ss << data;
-	return ss.str();
-}
-
-
 FiniteAutomaton::States sMove(const FiniteAutomaton& fa, const FiniteAutomaton::States& T, FiniteAutomaton::Symbol a) {
 	FiniteAutomaton::States states;
 	for (auto&& s : T) {
-		setAppend(states, fa.transition(s, a));
+		Set::append(states, fa.transition(s, a));
 	}
 	return states;
 }
@@ -39,8 +22,7 @@ FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAu
 	auto stack = T;
 
 	while (!stack.empty()) {
-		auto t = *stack.begin();
-		stack.erase(stack.begin());
+		auto t = Set::popFirst(stack);
 
 		for (auto&& u : fa.transition(t, 'L')) {
 			if (!closure.contains(u)) {
@@ -55,11 +37,11 @@ FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAu
 
 FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 	auto initial_state = sLambdaClosure(fa, {fa.initial_state()});
-	auto initial_state_str = sToString(initial_state);
+	auto initial_state_str = Set::toString(initial_state);
 	FiniteAutomaton::States states = {initial_state_str};
 
 	FiniteAutomaton::States accept_states;
-	if (!setIntersection(initial_state, fa.accept_states()).empty()) {
+	if (!Set::intersection(initial_state, fa.accept_states()).empty()) {
 		accept_states.insert(initial_state_str);
 	}
 
@@ -74,15 +56,15 @@ FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 
 		for (auto a : fa.alphabet()) {
 			auto U = sLambdaClosure(fa, sMove(fa, T, a));
-			auto U_str = sToString(U);
+			auto U_str = Set::toString(U);
 			if (!states.contains(U_str)) {
 				states.insert(U_str);
-				if (!setIntersection(U, fa.accept_states()).empty()) {
+				if (!Set::intersection(U, fa.accept_states()).empty()) {
 					accept_states.insert(U_str);
 				}
 				non_visited.insert(U);
 			}
-			transitions[sToString(T)][a] = {U_str};
+			transitions[Set::toString(T)][a] = {U_str};
 		}
 	}
 
@@ -112,26 +94,6 @@ FiniteAutomaton::Alphabet sCalculateAlphabet(std::string_view expression) {
 	return alphabet;
 }
 
-AbstractSyntaxTreeNode* sFindAcceptNode(AbstractSyntaxTreeNode* node) {
-	if (node->isLeaf()) {
-		if (node->data == '#') {
-			return node;
-		}
-		return nullptr;
-	}
-
-	for (auto child : {node->left, node->right}) {
-		if (child) {
-			auto accept_node = sFindAcceptNode(child);
-			if (accept_node) {
-				return accept_node;
-			}
-		}
-	}
-
-	return nullptr;
-}
-
 FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 	auto alphabet = sCalculateAlphabet(expression);
 
@@ -143,10 +105,10 @@ FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 	auto& first_pos = ast.firstPos();
 	auto& follow_pos = ast.followPos();
 
-	auto accept_node = sFindAcceptNode(root);
+	auto* accept_node = ast.findLeaf('#');
 	auto accept_node_index = leaf_to_index[accept_node];
 
-	auto initial_state = sToString(first_pos[root]);
+	auto initial_state = Set::toString(first_pos[root]);
 	auto states = FiniteAutomaton::States{initial_state};
 
 	FiniteAutomaton::States accept_states;
@@ -160,18 +122,17 @@ FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 	non_visited.insert(first_pos[root]);
 
 	while (!non_visited.empty()) {
-		auto s = *non_visited.begin();
-		non_visited.erase(non_visited.begin());
+		auto s = Set::popFirst(non_visited);
 
 		for (auto a : alphabet) {
 			std::set<size_t> u;
 			for (auto p : s) {
 				auto* p_leaf = index_to_leaf[p];
 				if (p_leaf->data == a) {
-					setAppend(u, follow_pos[p_leaf]);
+					Set::append(u, follow_pos[p_leaf]);
 				}
 			}
-			auto u_str = sToString(u);
+			auto u_str = Set::toString(u);
 			if (!states.contains(u_str)) {
 				states.insert(u_str);
 				if (u.contains(accept_node_index)) {
@@ -179,7 +140,7 @@ FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 				}
 				non_visited.insert(u);
 			}
-			transitions[sToString(s)][a] = {u_str};
+			transitions[Set::toString(s)][a] = {u_str};
 		}
 	}
 
@@ -203,4 +164,16 @@ DeterministicFiniteAutomaton::DeterministicFiniteAutomaton(const FiniteAutomaton
 DeterministicFiniteAutomaton::DeterministicFiniteAutomaton(std::string_view expression)
 	: FiniteAutomaton{sBuildDfaFromRegex(expression)}
 {
+}
+
+bool DeterministicFiniteAutomaton::accept(std::string_view s) {
+	auto state = initial_state_;
+	for (auto c : s) {
+		auto next = transition(state, c);
+		if (next.empty()) {
+			return false;
+		}
+		state = *next.begin();
+	}
+	return accept_states_.contains(state);
 }
