@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -37,7 +38,12 @@ public:
 
 	States transition(const State& from, Symbol symbol) const;
 
-	FiniteAutomaton& reverse();
+	void reverse();  // Do not use this from DFA
+	FiniteAutomaton reversed();
+
+	void rename();
+	void deleteUnreachableStates();
+	void deleteState(const State& state);
 
 	std::string toDotFormat() const;
 
@@ -59,4 +65,9 @@ protected:
 
 	void checkStateIsValid_(const State& state) const;
 	void checkSymbolIsValid_(Symbol symbol) const;
+
+	using OnTransition = std::function<void(const State& from, Symbol symbol, const State& to)>;
+	void forAllTransitions_(OnTransition onTransition);
+
+	void createInitialState_(const States& initial_states);
 };

@@ -2,6 +2,7 @@
 
 #include <experimental/iterator>
 #include <sstream>
+#include <stack>
 #include <queue>
 
 #include <recursive_descent_parser.hpp>
@@ -33,16 +34,27 @@ FiniteAutomaton::States sMove(const FiniteAutomaton& fa, const FiniteAutomaton::
 	return states;
 }
 
-FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAutomaton::State& s) {
-	return fa.transition(s, 'L');
-}
-
 FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAutomaton::States& T) {
-	return sMove(fa, T, 'L');
+	auto closure = T;
+	auto stack = T;
+
+	while (!stack.empty()) {
+		auto t = *stack.begin();
+		stack.erase(stack.begin());
+
+		for (auto&& u : fa.transition(t, 'L')) {
+			if (!closure.contains(u)) {
+				closure.insert(u);
+				stack.insert(u);
+			}
+		}
+	}
+
+	return closure;
 }
 
 FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
-	auto initial_state = sLambdaClosure(fa, fa.initial_state());
+	auto initial_state = sLambdaClosure(fa, {fa.initial_state()});
 	auto initial_state_str = sToString(initial_state);
 	FiniteAutomaton::States states = {initial_state_str};
 
@@ -74,13 +86,18 @@ FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 		}
 	}
 
-	return FiniteAutomaton{
+	auto result = FiniteAutomaton{
 		std::move(states),
 		fa.alphabet(),
 		std::move(transitions),
 		std::move(initial_state_str),
 		std::move(accept_states)
 	};
+
+	//result.deleteState("{}");
+	result.deleteUnreachableStates();
+
+	return result;
 }
 
 FiniteAutomaton::Alphabet sCalculateAlphabet(std::string_view expression) {
