@@ -5,8 +5,15 @@
 
 
 int main() {
-	//DeterministicFiniteAutomaton dfa("(a|b)*abb");
-	DeterministicFiniteAutomaton dfa("(a|b)*abb**(aa|b*a*|ab*)*");
-	std::cout << generateLinkToGraphvizOnline(dfa.convertAstToDotFormat()) << std::endl;
-	std::cout << generateLinkToGraphvizOnline(dfa.convertDfaToDotFormat()) << std::endl;
+	DeterministicFiniteAutomaton dfa("(a|b)*abb");
+	//DeterministicFiniteAutomaton dfa("(a|b)*abb**(aa|b*a*|ab*)*");
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	dfa.reverse();
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	dfa = DeterministicFiniteAutomaton(dfa);
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	dfa.reverse();
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	dfa = DeterministicFiniteAutomaton(dfa);
+	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
 }

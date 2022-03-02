@@ -14,10 +14,10 @@ set(
 	binary_tree_node.hpp
 	char_reader.hpp
 	deterministic_finite_automaton.hpp
+	finite_automaton.hpp
 	graphviz.hpp
-	hash_combine.hpp
 	recursive_descent_parser.hpp
-	set_union.hpp
+	set_utils.hpp
 )
 
 set(
@@ -25,8 +25,8 @@ set(
 	abstract_syntax_tree.cpp
 	char_reader.cpp
 	deterministic_finite_automaton.cpp
+	finite_automaton.cpp
 	graphviz.cpp
-	hash_combine.cpp
 	recursive_descent_parser.cpp
 )
 
