@@ -1,2 +1,11 @@
+# CLion
 .idea/
 cmake-build-*/
+
+# TexLive
+*.aux
+*.bcf
+*.log
+*.out
+*.run.xml
+*.synctex.gz
