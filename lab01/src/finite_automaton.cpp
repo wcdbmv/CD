@@ -110,7 +110,7 @@ void FiniteAutomaton::reverse() {
 	}
 }
 
-FiniteAutomaton FiniteAutomaton::reversed() {
+FiniteAutomaton FiniteAutomaton::reversed() const {
 	auto fa = *this;
 	fa.reverse();
 	return fa;
@@ -208,23 +208,17 @@ std::string FiniteAutomaton::toDotFormat() const {
 		"\trankdir=\"LR\"\n"
 		"\t\"\" [shape=none]\n\n";
 
-	for (auto&& state : states_) {
-		dot += "\t";
-		if (initial_state_ == state) {
-			dot += "\"\" -> ";
-		}
-		dot += "\"" + state + "\"";
-		if (accept_states_.contains(state)) {
-			dot += " [peripheries=2]";
-		}
-		dot += "\n";
+	dot += "\t\"\" -> \"" + initial_state_ + "\"\n";
+
+	for (auto&& state : accept_states_) {
+		dot += "\t\"" + state + "\" [peripheries=2]\n";
 	}
 	dot += "\n";
 
 	for (auto&& [from, map_symbol_to_state] : transitions_) {
 		const auto from_str = "\t\"" + from + "\" -> \"";
 		for (auto&& [symbol, to_states] : map_symbol_to_state) {
-			const auto symbol_str = "\" [label=\"" + std::string{symbol} + "\"]\n";
+			const auto symbol_str = "\" [label=\"" + (symbol == 'L' ? "λ" : std::string{symbol}) + "\"]\n";
 			for (auto&& to : to_states) {
 				dot += from_str;
 				dot += to;

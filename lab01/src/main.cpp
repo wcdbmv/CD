@@ -2,12 +2,37 @@
 
 #include <deterministic_finite_automaton.hpp>
 #include <graphviz.hpp>
+#include <recursive_descent_parser.hpp>
 
 
-int main() {
-	DeterministicFiniteAutomaton dfa("(a|b)*abb");
-	//DeterministicFiniteAutomaton dfa("(a|b)*abb**(aa|b*a*|ab*)*");
-	/*FiniteAutomaton fa(
+namespace {
+
+DeterministicFiniteAutomaton sBrzozowski(const FiniteAutomaton& A) {
+	auto fa = A.reversed();
+	std::cout << "r(A):\n" << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
+
+	auto dfa = DeterministicFiniteAutomaton(fa);
+	std::cout << "dr(A):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	dfa.rename();
+	std::cout << "mdr(A):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	fa = dfa.reversed();
+	std::cout << "rmdr(A):\n" << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
+
+	dfa = DeterministicFiniteAutomaton(fa);
+	std::cout << "drmdr(A):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	dfa.rename();
+	std::cout << "mdrmdr(A):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+
+	return dfa;
+}
+
+FiniteAutomaton sExample1() {
+	// from http://sovietov.com/txt/minfa/minfa.html
+
+	return FiniteAutomaton{
 		{"0", "1", "2", "3"},
 		{'a', 'b'},
 		{
@@ -17,8 +42,14 @@ int main() {
 		},
 		"0",
 		{"3"}
-	);*/
-	/*FiniteAutomaton fa(
+	};
+}
+
+FiniteAutomaton sExample2() {
+	// Пример 3.21 из
+	// АХО А. В, ЛАМ М. С., СЕТИ Р., УЛЬМАН Дж. Д. Компиляторы: принципы, технологии и инструменты. – М.: Вильямс, 2008.
+
+	return FiniteAutomaton{
 		{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
 		{'a', 'b'},
 		{
@@ -35,32 +66,43 @@ int main() {
 		},
 		"0",
 		{"10"}
-	);*/
-	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	};
+}
 
-	auto fa = dfa.reversed();
-	std::cout << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
+}  // namespace
 
-	dfa = DeterministicFiniteAutomaton(fa);
-	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
 
-	dfa.rename();
-	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+int main() {
+	std::cout << "Note:\n\tr - reverse\n\td - determinize\n\tm - rename\n\n";
 
-	fa = dfa.reversed();
-	std::cout << generateLinkToGraphvizOnline(fa.toDotFormat()) << std::endl;
+	std::string expression;
+	std::cout << "Input regular expression\n>>> ";
+	std::cin >> expression;
 
-	dfa = DeterministicFiniteAutomaton(fa);
-	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	auto root = RecursiveDescentParser{}.parse("(" + std::string{expression} + ")#");
+	auto ast = AbstractSyntaxTree{root};
+	std::cout << "AST:\n" << generateLinkToGraphvizOnline(ast.toDotFormat()) << std::endl;
 
-	dfa.rename();
-	std::cout << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	DeterministicFiniteAutomaton dfa(expression);
+	std::cout << "A (DFA):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
 
+	std::string ans;
+	std::cout << "Rename [Y/n]? ";
+	std::getline(std::cin, ans);
+	std::getline(std::cin, ans);
+	if (ans.find('n') == std::string::npos) {
+		dfa.rename();
+		std::cout << "A = m(A):\n" << generateLinkToGraphvizOnline(dfa.toDotFormat()) << std::endl;
+	}
+
+	dfa = sBrzozowski(dfa);
+
+	std::cout << "Input string (or \"exit\")" << std::endl;
 	while (true) {
 		std::cout << ">>> ";
 
 		std::string s;
-		std::cin >> s;
+		std::getline(std::cin, s);
 
 		if (s == "exit") {
 			break;

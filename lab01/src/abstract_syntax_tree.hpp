@@ -23,7 +23,7 @@ public:
 
 	AbstractSyntaxTreeNode* findLeaf(char data);
 
-	std::string convertToDotFormat() const;
+	std::string toDotFormat() const;
 
 private:
 	AbstractSyntaxTreeNode* root_;

@@ -39,7 +39,7 @@ public:
 	States transition(const State& from, Symbol symbol) const;
 
 	void reverse();  // Do not use this from DFA
-	FiniteAutomaton reversed();
+	FiniteAutomaton reversed() const;
 
 	void rename();
 	void deleteUnreachableStates();

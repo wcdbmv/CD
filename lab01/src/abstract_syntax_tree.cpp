@@ -192,6 +192,6 @@ AbstractSyntaxTreeNode* AbstractSyntaxTree::findLeaf(char data) {
 	return sFindLeaf(root_, data);
 }
 
-std::string AbstractSyntaxTree::convertToDotFormat() const {
+std::string AbstractSyntaxTree::toDotFormat() const {
 	return "graph AST {\n" + sConvertToDotFormatInternal(root_) + "}\n";
 }
