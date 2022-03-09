@@ -9,6 +9,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(
 	HEADERS
+	automaton/deterministic_finite_automaton.hpp
+	automaton/finite_automaton.hpp
+	parser/abstract_syntax_tree.hpp
 	parser/char_reader.hpp
 	parser/recursive_descent_parser.hpp
 	types/abstract_syntax_tree_node.hpp
@@ -16,19 +19,16 @@ set(
 	types/common.hpp
 	utils/graphviz.hpp
 	utils/set_utils.hpp
-	abstract_syntax_tree.hpp
-	deterministic_finite_automaton.hpp
-	finite_automaton.hpp
 )
 
 set(
 	SOURCES
+	automaton/deterministic_finite_automaton.cpp
+	automaton/finite_automaton.cpp
+	parser/abstract_syntax_tree.cpp
 	parser/char_reader.cpp
 	parser/recursive_descent_parser.cpp
 	utils/graphviz.cpp
-	abstract_syntax_tree.cpp
-	deterministic_finite_automaton.cpp
-	finite_automaton.cpp
 )
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)

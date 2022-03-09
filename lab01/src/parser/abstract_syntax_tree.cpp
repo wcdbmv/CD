@@ -1,4 +1,4 @@
-#include <abstract_syntax_tree.hpp>
+#include <parser/abstract_syntax_tree.hpp>
 
 #include <iomanip>
 #include <sstream>
@@ -15,7 +15,6 @@ void sDummyCallback(AbstractSyntaxTreeNode*) {}
 
 void sTraverse(AbstractSyntaxTreeNode* node,
                CallbackRef onLeaf = sDummyCallback,
-               CallbackRef onChild = sDummyCallback,
                CallbackRef onOr = sDummyCallback,
                CallbackRef onCat = sDummyCallback,
                CallbackRef onStar = sDummyCallback) {
@@ -25,7 +24,7 @@ void sTraverse(AbstractSyntaxTreeNode* node,
 		return;
 	}
 
-	node->applyToChildren(onChild);
+	node->applyToChildren([&](auto* child) { sTraverse(child, onLeaf, onOr, onCat, onStar); });
 
 	if (node->data == '|') {
 		onOr(node);
@@ -87,45 +86,44 @@ AbstractSyntaxTree::AbstractSyntaxTree(AbstractSyntaxTreeNode* root)
 		throw std::invalid_argument("[AbstractSyntaxTree::AbstractSyntaxTree] root is nullptr");
 	}
 
-	size_t i = 1;
-	numerateLeaves_(root_, i);
+	numerateLeaves_();
 
-	calculateNullable_(root_);
-	calculateFirstPos_(root_);
-	calculateLastPos_(root_);
-	calculateFollowPos_(root_);
+	calculateNullable_();
+	calculateFirstPos_();
+	calculateLastPos_();
+	calculateFollowPos_();
 }
 
 AbstractSyntaxTree::~AbstractSyntaxTree() {
 	AbstractSyntaxTreeNode::clear(root_);
 }
 
-void AbstractSyntaxTree::numerateLeaves_(AbstractSyntaxTreeNode* node, size_t& i) {
+void AbstractSyntaxTree::numerateLeaves_() {
+	size_t i = 1;
+
 	sTraverse(
-		node,
+		root_,
 		[&](auto* node) {
 			leaf_to_index_[node] = i;
 			index_to_leaf_[i] = node;
 			++i;
-		},
-		[&](auto* child) { numerateLeaves_(child, i); }
+		}
 	);
 }
 
-void AbstractSyntaxTree::calculateNullable_(AbstractSyntaxTreeNode* node) {
+void AbstractSyntaxTree::calculateNullable_() {
 	sTraverse(
-		node,
+		root_,
 		[&](auto* node) { nullable_[node] = node->data == 'E'; },
-		[&](auto* child) { calculateNullable_(child); },
 		[&](auto* node) { nullable_[node] = nullable_[node->left] || nullable_[node->right]; },
 		[&](auto* node) { nullable_[node] = nullable_[node->left] && nullable_[node->right]; },
 		[&](auto* node) { nullable_[node] = true; }
 	);
 }
 
-void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
+void AbstractSyntaxTree::calculateFirstPos_() {
 	sTraverse(
-		node,
+		root_,
 		[&](auto* node) {
 			if (node->data == 'E') {
 				first_pos_[node] = {};
@@ -133,7 +131,6 @@ void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
 				first_pos_[node] = {leaf_to_index_[node]};
 			}
 		},
-		[&](auto* child) { calculateFirstPos_(child); },
 		[&](auto* node) { first_pos_[node] = SetUtils::Union(first_pos_[node->left], first_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->left]) {
@@ -146,9 +143,9 @@ void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
 	);
 }
 
-void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
+void AbstractSyntaxTree::calculateLastPos_() {
 	sTraverse(
-		node,
+		root_,
 		[&](auto* node) {
 			if (node->data == 'E') {
 				last_pos_[node] = {};
@@ -156,7 +153,6 @@ void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
 				last_pos_[node] = {leaf_to_index_[node]};
 			}
 		},
-		[&](auto* child) { calculateLastPos_(child); },
 		[&](auto* node) { last_pos_[node] = SetUtils::Union(last_pos_[node->left], last_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->right]) {
@@ -169,11 +165,10 @@ void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
 	);
 }
 
-void AbstractSyntaxTree::calculateFollowPos_(AbstractSyntaxTreeNode* node) {
+void AbstractSyntaxTree::calculateFollowPos_() {
 	sTraverse(
-		node,
+		root_,
 		sDummyCallback,
-		[&](auto* child) { calculateFollowPos_(child); },
 		sDummyCallback,
 		[&](auto* node) {
 			for (auto i : last_pos_[node->left]) {

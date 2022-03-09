@@ -1,4 +1,4 @@
-#include <finite_automaton.hpp>
+#include <automaton/finite_automaton.hpp>
 
 #include <stdexcept>
 

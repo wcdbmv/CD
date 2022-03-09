@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include <deterministic_finite_automaton.hpp>
-#include <utils/graphviz.hpp>
+#include <automaton/deterministic_finite_automaton.hpp>
+#include <parser/abstract_syntax_tree.hpp>
 #include <parser/recursive_descent_parser.hpp>
+#include <utils/graphviz.hpp>
 
 
 namespace {

@@ -1,8 +1,6 @@
-#include <deterministic_finite_automaton.hpp>
+#include <automaton/deterministic_finite_automaton.hpp>
 
-#include <experimental/iterator>
-#include <stack>
-
+#include <parser/abstract_syntax_tree.hpp>
 #include <parser/recursive_descent_parser.hpp>
 #include <utils/set_utils.hpp>
 
