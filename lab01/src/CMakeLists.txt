@@ -9,10 +9,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(
 	HEADERS
+	types/binary_tree_node.hpp
 	types/common.hpp
 	abstract_syntax_tree_node.hpp
 	abstract_syntax_tree.hpp
-	binary_tree_node.hpp
+
 	char_reader.hpp
 	deterministic_finite_automaton.hpp
 	finite_automaton.hpp
