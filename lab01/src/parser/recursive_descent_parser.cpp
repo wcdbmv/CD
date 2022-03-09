@@ -1,4 +1,4 @@
-#include <recursive_descent_parser.hpp>
+#include <parser/recursive_descent_parser.hpp>
 
 
 AbstractSyntaxTreeNode* RecursiveDescentParser::parse(std::string_view expression) {

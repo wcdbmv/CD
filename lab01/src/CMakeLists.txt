@@ -9,26 +9,26 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(
 	HEADERS
+	parser/char_reader.hpp
+	parser/recursive_descent_parser.hpp
 	types/abstract_syntax_tree_node.hpp
 	types/binary_tree_node.hpp
 	types/common.hpp
 	abstract_syntax_tree.hpp
-	char_reader.hpp
 	deterministic_finite_automaton.hpp
 	finite_automaton.hpp
 	graphviz.hpp
-	recursive_descent_parser.hpp
 	set_utils.hpp
 )
 
 set(
 	SOURCES
+	parser/char_reader.cpp
+	parser/recursive_descent_parser.cpp
 	abstract_syntax_tree.cpp
-	char_reader.cpp
 	deterministic_finite_automaton.cpp
 	finite_automaton.cpp
 	graphviz.cpp
-	recursive_descent_parser.cpp
 )
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)

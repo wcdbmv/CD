@@ -2,7 +2,7 @@
 
 #include <deterministic_finite_automaton.hpp>
 #include <graphviz.hpp>
-#include <recursive_descent_parser.hpp>
+#include <parser/recursive_descent_parser.hpp>
 
 
 namespace {

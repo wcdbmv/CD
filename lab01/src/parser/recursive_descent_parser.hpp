@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types/abstract_syntax_tree_node.hpp>
-#include <char_reader.hpp>
+#include <parser/char_reader.hpp>
 
 
 class RecursiveDescentParser : public CharReader
