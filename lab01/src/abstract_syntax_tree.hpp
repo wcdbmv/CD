@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <abstract_syntax_tree_node.hpp>
+#include <types/abstract_syntax_tree_node.hpp>
 
 
 class AbstractSyntaxTree {

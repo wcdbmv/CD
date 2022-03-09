@@ -1,6 +1,6 @@
 #pragma once
 
-#include <abstract_syntax_tree_node.hpp>
+#include <types/abstract_syntax_tree_node.hpp>
 #include <char_reader.hpp>
 
 
