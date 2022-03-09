@@ -134,10 +134,10 @@ void AbstractSyntaxTree::calculateFirstPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateFirstPos_(child); },
-		[&](auto* node) { first_pos_[node] = Set::Union(first_pos_[node->left], first_pos_[node->right]); },
+		[&](auto* node) { first_pos_[node] = SetUtils::Union(first_pos_[node->left], first_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->left]) {
-				first_pos_[node] = Set::Union(first_pos_[node->left], first_pos_[node->right]);
+				first_pos_[node] = SetUtils::Union(first_pos_[node->left], first_pos_[node->right]);
 			} else {
 				first_pos_[node] = first_pos_[node->left];
 			}
@@ -157,10 +157,10 @@ void AbstractSyntaxTree::calculateLastPos_(AbstractSyntaxTreeNode* node) {
 			}
 		},
 		[&](auto* child) { calculateLastPos_(child); },
-		[&](auto* node) { last_pos_[node] = Set::Union(last_pos_[node->left], last_pos_[node->right]); },
+		[&](auto* node) { last_pos_[node] = SetUtils::Union(last_pos_[node->left], last_pos_[node->right]); },
 		[&](auto* node) {
 			if (nullable_[node->right]) {
-				last_pos_[node] = Set::Union(last_pos_[node->left], last_pos_[node->right]);
+				last_pos_[node] = SetUtils::Union(last_pos_[node->left], last_pos_[node->right]);
 			} else {
 				last_pos_[node] = last_pos_[node->right];
 			}
@@ -177,12 +177,12 @@ void AbstractSyntaxTree::calculateFollowPos_(AbstractSyntaxTreeNode* node) {
 		sDummyCallback,
 		[&](auto* node) {
 			for (auto i : last_pos_[node->left]) {
-				Set::append(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
+				SetUtils::append(follow_pos_[index_to_leaf_[i]], first_pos_[node->right]);
 			}
 		},
 		[&](auto* node) {
 			for (auto i : last_pos_[node]) {
-				Set::append(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
+				SetUtils::append(follow_pos_[index_to_leaf_[i]], first_pos_[node]);
 			}
 		}
 	);

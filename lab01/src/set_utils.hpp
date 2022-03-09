@@ -16,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, const std::set<T>& set) {
 }
 
 
-namespace Set {
+namespace SetUtils {
 
 template <typename T>
 void append(std::set<T>& a, const std::set<T>& b) {
@@ -58,4 +58,4 @@ std::string toString(const std::set<T>& set) {
 	return ss.str();
 }
 
-}  // namespace Set
+}  // namespace SetUtils

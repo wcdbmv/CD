@@ -5,22 +5,10 @@
 #include <string>
 #include <unordered_map>
 
+#include <types/common.hpp>
+
 
 class FiniteAutomaton {
-public:
-	template <typename T>
-	using Set = std::set<T>;
-
-	template <typename T, typename U>
-	using Map = std::unordered_map<T, U>;
-
-	using State = std::string;
-	using Symbol = char;
-
-	using States = Set<State>;
-	using Alphabet = Set<Symbol>;
-	using Transitions = Map<State, Map<Symbol, States>>;
-
 public:
 	explicit FiniteAutomaton(
 		States states = {},

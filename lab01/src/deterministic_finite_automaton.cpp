@@ -9,20 +9,20 @@
 
 namespace {
 
-FiniteAutomaton::States sMove(const FiniteAutomaton& fa, const FiniteAutomaton::States& T, FiniteAutomaton::Symbol a) {
-	FiniteAutomaton::States states;
+States sMove(const FiniteAutomaton& fa, const States& T, Symbol a) {
+	States states;
 	for (auto&& s : T) {
-		Set::append(states, fa.transition(s, a));
+		SetUtils::append(states, fa.transition(s, a));
 	}
 	return states;
 }
 
-FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAutomaton::States& T) {
+States sLambdaClosure(const FiniteAutomaton& fa, const States& T) {
 	auto closure = T;
 	auto stack = T;
 
 	while (!stack.empty()) {
-		auto t = Set::popFirst(stack);
+		auto t = SetUtils::popFirst(stack);
 
 		for (auto&& u : fa.transition(t, 'L')) {
 			if (!closure.contains(u)) {
@@ -37,17 +37,17 @@ FiniteAutomaton::States sLambdaClosure(const FiniteAutomaton& fa, const FiniteAu
 
 FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 	auto initial_state = sLambdaClosure(fa, {fa.initial_state()});
-	auto initial_state_str = Set::toString(initial_state);
-	FiniteAutomaton::States states = {initial_state_str};
+	auto initial_state_str = SetUtils::toString(initial_state);
+	States states = {initial_state_str};
 
-	FiniteAutomaton::States accept_states;
-	if (!Set::intersection(initial_state, fa.accept_states()).empty()) {
+	States accept_states;
+	if (!SetUtils::intersection(initial_state, fa.accept_states()).empty()) {
 		accept_states.insert(initial_state_str);
 	}
 
-	FiniteAutomaton::Transitions transitions;
+	Transitions transitions;
 
-	std::set<FiniteAutomaton::States> non_visited;
+	std::set<States> non_visited;
 	non_visited.insert(initial_state);
 
 	while (!non_visited.empty()) {
@@ -56,15 +56,15 @@ FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 
 		for (auto a : fa.alphabet()) {
 			auto U = sLambdaClosure(fa, sMove(fa, T, a));
-			auto U_str = Set::toString(U);
+			auto U_str = SetUtils::toString(U);
 			if (!states.contains(U_str)) {
 				states.insert(U_str);
-				if (!Set::intersection(U, fa.accept_states()).empty()) {
+				if (!SetUtils::intersection(U, fa.accept_states()).empty()) {
 					accept_states.insert(U_str);
 				}
 				non_visited.insert(U);
 			}
-			transitions[Set::toString(T)][a] = {U_str};
+			transitions[SetUtils::toString(T)][a] = {U_str};
 		}
 	}
 
@@ -82,8 +82,8 @@ FiniteAutomaton sBuildDfaFromFa(const FiniteAutomaton& fa) {
 	return result;
 }
 
-FiniteAutomaton::Alphabet sCalculateAlphabet(std::string_view expression) {
-	FiniteAutomaton::Alphabet alphabet;
+Alphabet sCalculateAlphabet(std::string_view expression) {
+	Alphabet alphabet;
 
 	for (auto c : expression) {
 		if (c != '(' && c != ')' && c != '|' && c != '*') {
@@ -108,31 +108,31 @@ FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 	auto* accept_node = ast.findLeaf('#');
 	auto accept_node_index = leaf_to_index[accept_node];
 
-	auto initial_state = Set::toString(first_pos[root]);
-	auto states = FiniteAutomaton::States{initial_state};
+	auto initial_state = SetUtils::toString(first_pos[root]);
+	auto states = States{initial_state};
 
-	FiniteAutomaton::States accept_states;
+	States accept_states;
 	if (first_pos[root].contains(accept_node_index)) {
 		accept_states = states;
 	}
 
-	FiniteAutomaton::Transitions transitions;
+	Transitions transitions;
 
 	std::set<std::set<size_t>> non_visited;
 	non_visited.insert(first_pos[root]);
 
 	while (!non_visited.empty()) {
-		auto s = Set::popFirst(non_visited);
+		auto s = SetUtils::popFirst(non_visited);
 
 		for (auto a : alphabet) {
 			std::set<size_t> u;
 			for (auto p : s) {
 				auto* p_leaf = index_to_leaf[p];
 				if (p_leaf->data == a) {
-					Set::append(u, follow_pos[p_leaf]);
+					SetUtils::append(u, follow_pos[p_leaf]);
 				}
 			}
-			auto u_str = Set::toString(u);
+			auto u_str = SetUtils::toString(u);
 			if (!states.contains(u_str)) {
 				states.insert(u_str);
 				if (u.contains(accept_node_index)) {
@@ -140,7 +140,7 @@ FiniteAutomaton sBuildDfaFromRegex(std::string_view expression) {
 				}
 				non_visited.insert(u);
 			}
-			transitions[Set::toString(s)][a] = {u_str};
+			transitions[SetUtils::toString(s)][a] = {u_str};
 		}
 	}
 

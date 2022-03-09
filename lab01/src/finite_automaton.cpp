@@ -7,7 +7,7 @@
 
 namespace {
 
-void sForAllTransitions(const FiniteAutomaton::Transitions& transitions, auto onTransition) {
+void sForAllTransitions(const Transitions& transitions, auto onTransition) {
 	for (auto&& [from, map_symbol_to_states] : transitions) {
 		for (auto&& [symbol, to_states] : map_symbol_to_states) {
 			for (auto&& to : to_states) {
@@ -101,7 +101,7 @@ void FiniteAutomaton::reverse() {
 
 	auto tmp = std::move(initial_state_);
 	if (accept_states_.size() == 1) {
-		initial_state_ = Set::popFirst(accept_states_);
+		initial_state_ = SetUtils::popFirst(accept_states_);
 		accept_states_.insert(std::move(tmp));
 	} else {
 		createInitialState_(accept_states_);
@@ -119,7 +119,7 @@ FiniteAutomaton FiniteAutomaton::reversed() const {
 void FiniteAutomaton::rename() {
 	std::unordered_map<std::string, std::string> translation;
 
-	FiniteAutomaton::States new_states;
+	States new_states;
 
 	size_t i = 0;
 	for (auto&& state : states_) {
@@ -129,14 +129,14 @@ void FiniteAutomaton::rename() {
 		++i;
 	}
 
-	FiniteAutomaton::Transitions new_transitions;
+	Transitions new_transitions;
 	forAllTransitions_([&](const State& from, Symbol symbol, const State& to) {
 		new_transitions[translation[from]][symbol].insert(translation[to]);
 	});
 
 	auto new_initial_state = translation[initial_state_];
 
-	FiniteAutomaton::States new_accept_states;
+	States new_accept_states;
 	for (auto&& accept_state : accept_states_) {
 		new_accept_states.insert(translation[accept_state]);
 	}
@@ -158,15 +158,15 @@ void FiniteAutomaton::deleteUnreachableStates() {
 	States need_to_visit = {fa.initial_state_};
 
 	while (!need_to_visit.empty()) {
-		auto state = Set::popFirst(need_to_visit);
+		auto state = SetUtils::popFirst(need_to_visit);
 		visited.insert(state);
 
 		for (auto symbol : alphabet) {
-			Set::append(need_to_visit, Set::difference(fa.transition(state, symbol), visited));
+			SetUtils::append(need_to_visit, SetUtils::difference(fa.transition(state, symbol), visited));
 		}
 	}
 
-	for (auto&& unreachable : Set::difference(fa.states_, visited)) {
+	for (auto&& unreachable : SetUtils::difference(fa.states_, visited)) {
 		deleteState(unreachable);
 	}
 }
@@ -180,9 +180,9 @@ void FiniteAutomaton::deleteState(const State& state) {
 	states_.erase(it);
 
 	if (initial_state_ == state) {
-		FiniteAutomaton::States initial_states;
+		States initial_states;
 		for (auto&& [symbol, to_states] : transitions_[state]) {
-			Set::append(initial_states, to_states);
+			SetUtils::append(initial_states, to_states);
 		}
 		if (!initial_states.empty()) {
 			createInitialState_(initial_states);
