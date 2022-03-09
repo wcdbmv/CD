@@ -14,21 +14,21 @@ set(
 	types/abstract_syntax_tree_node.hpp
 	types/binary_tree_node.hpp
 	types/common.hpp
+	utils/graphviz.hpp
+	utils/set_utils.hpp
 	abstract_syntax_tree.hpp
 	deterministic_finite_automaton.hpp
 	finite_automaton.hpp
-	graphviz.hpp
-	set_utils.hpp
 )
 
 set(
 	SOURCES
 	parser/char_reader.cpp
 	parser/recursive_descent_parser.cpp
+	utils/graphviz.cpp
 	abstract_syntax_tree.cpp
 	deterministic_finite_automaton.cpp
 	finite_automaton.cpp
-	graphviz.cpp
 )
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)

@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include <deterministic_finite_automaton.hpp>
-#include <graphviz.hpp>
+#include <utils/graphviz.hpp>
 #include <parser/recursive_descent_parser.hpp>
 
 

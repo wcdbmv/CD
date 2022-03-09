@@ -1,4 +1,4 @@
-#include <graphviz.hpp>
+#include <utils/graphviz.hpp>
 
 
 std::string generateLinkToGraphvizOnline(std::string_view dot) {

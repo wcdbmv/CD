@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <set_utils.hpp>
+#include <utils/set_utils.hpp>
 
 
 namespace {
