@@ -1,5 +1,6 @@
 #include <grammar.hpp>
 
+#include <fstream>
 #include <stdexcept>
 
 #include <utils/set_utils.hpp>
@@ -119,4 +120,16 @@ std::ostream& operator<<(std::ostream& os, const Grammar& grammar) {
 	}
 	os << grammar.start_symbol_ << '\n';
 	return os;
+}
+
+Grammar Grammar::readFromFile(const std::filesystem::path& path) {
+	Grammar grammar;
+	std::ifstream stream{path};
+	stream >> grammar;
+	return grammar;
+}
+
+void Grammar::writeToFile(const std::filesystem::path& path) const {
+	std::ofstream stream{path};
+	stream << *this;
 }

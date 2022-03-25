@@ -15,7 +15,6 @@ int main() {
 		"A",
 	};*/
 
-	Grammar grammar;
-	std::cin >> grammar;
-	std::cout << grammar;
+	auto grammar = Grammar::readFromFile("../tests/1.txt");
+	grammar.writeToFile("../tests/2.txt");
 }

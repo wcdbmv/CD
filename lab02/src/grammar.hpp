@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <istream>
 #include <ostream>
 
@@ -17,6 +18,9 @@ public:
 
 	friend std::istream& operator>>(std::istream& is, Grammar& grammar);
 	friend std::ostream& operator<<(std::ostream& os, const Grammar& grammar);
+
+	static Grammar readFromFile(const std::filesystem::path& path);
+	void writeToFile(const std::filesystem::path& path) const;
 
 private:
 	// Σ — набор (алфавит) терминальных символов
