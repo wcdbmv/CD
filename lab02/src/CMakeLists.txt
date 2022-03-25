@@ -9,15 +9,17 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(
 	HEADERS
+	grammars/context_free_grammar.hpp
+	grammars/grammar.hpp
 	types/common.hpp
 	utils/io_utils.hpp
 	utils/set_utils.hpp
-	grammar.hpp
 )
 
 set(
 	SOURCES
-	grammar.cpp
+	grammars/context_free_grammar.cpp
+	grammars/grammar.cpp
 )
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)

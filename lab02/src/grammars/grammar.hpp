@@ -10,8 +10,8 @@
 class Grammar {
 public:
 	explicit Grammar(
-		Alphabet terminal_symbols = {},
 		Alphabet non_terminal_symbols = {},
+		Alphabet terminal_symbols = {},
 		ProductionRules production_rules = {},
 		Symbol start_symbol = {}
 	);
@@ -22,12 +22,14 @@ public:
 	static Grammar readFromFile(const std::filesystem::path& path);
 	void writeToFile(const std::filesystem::path& path) const;
 
-private:
-	// Σ — набор (алфавит) терминальных символов
-	Alphabet terminal_symbols_;
+	size_t productionRulesCount() const;
 
+protected:
 	// N — набор (алфавит) нетерминальных символов
 	Alphabet non_terminal_symbols_;
+
+	// Σ — набор (алфавит) терминальных символов
+	Alphabet terminal_symbols_;
 
 	// P — набор правил вида: «левая часть» → «правая часть», где
 	//   — «левая часть» — непустая последоавтельность терминалов и нетерминалов,

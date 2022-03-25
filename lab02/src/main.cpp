@@ -1,12 +1,12 @@
 #include <iostream>
 
-#include <grammar.hpp>
+#include <grammars/context_free_grammar.hpp>
 
 
 int main() {
 	/*Grammar grammar{
-		{"a", "b", "c"},
 		{"A", "B", "C"},
+		{"a", "b", "c"},
 		{
 			{{"A"}, {"A", "a"}},
 			{{"B"}, {"b", "B"}},
@@ -16,5 +16,6 @@ int main() {
 	};*/
 
 	auto grammar = Grammar::readFromFile("../tests/1.txt");
-	grammar.writeToFile("../tests/2.txt");
+	ContextFreeGrammar grammar1{grammar};
+	grammar1.writeToFile("../tests/2.txt");
 }

@@ -1,4 +1,4 @@
-#include <grammar.hpp>
+#include <grammars/grammar.hpp>
 
 #include <fstream>
 #include <stdexcept>
@@ -7,13 +7,13 @@
 
 
 Grammar::Grammar(
-	Alphabet terminal_symbols,
 	Alphabet non_terminal_symbols,
+	Alphabet terminal_symbols,
 	ProductionRules production_rules,
 	Symbol start_symbol
 )
-	: terminal_symbols_{std::move(terminal_symbols)}
-	, non_terminal_symbols_{std::move(non_terminal_symbols)}
+	: non_terminal_symbols_{std::move(non_terminal_symbols)}
+	, terminal_symbols_{std::move(terminal_symbols)}
 	, production_rules_{std::move(production_rules)}
 	, start_symbol_{std::move(start_symbol)}
 {
@@ -21,11 +21,13 @@ Grammar::Grammar(
 		throw std::invalid_argument("[Grammar::Grammar] Σ and N contains common symbols: " + SetUtils::toString(common));
 	}
 
-	for (auto&& [from, to] : production_rules_) {
-		checkProductionRule_(from, to);
+	for (auto&& [from, tos] : production_rules_) {
+		for (auto&& to : tos) {
+			checkProductionRule_(from, to);
+		}
 	}
 
-	if (!(start_symbol_.empty() && non_terminal_symbols_.empty()
+	if (!(   start_symbol_.empty() && non_terminal_symbols_.empty()
 	      || non_terminal_symbols_.contains(start_symbol_))) {
 		throw std::invalid_argument("[Grammar::Grammar] S must be in N");
 	}
@@ -51,9 +53,17 @@ void Grammar::checkProductionRule_(const String& from, const String& to) {
 	}
 }
 
+size_t Grammar::productionRulesCount() const {
+	size_t n = 0;
+	for (auto&& [from, tos] : production_rules_) {
+		n += tos.size();
+	}
+	return n;
+}
+
 std::istream& operator>>(std::istream& is, Grammar& grammar) {
-	Alphabet terminal_symbols;
 	Alphabet non_terminal_symbols;
+	Alphabet terminal_symbols;
 	ProductionRules production_rules;
 	Symbol start_symbol;
 
@@ -63,7 +73,7 @@ std::istream& operator>>(std::istream& is, Grammar& grammar) {
 	for (size_t i = 0; i < n; ++i) {
 		Symbol symbol;
 		is >> symbol;
-		terminal_symbols.insert(std::move(symbol));
+		non_terminal_symbols.insert(std::move(symbol));
 	}
 
 	is >> n;
@@ -71,7 +81,7 @@ std::istream& operator>>(std::istream& is, Grammar& grammar) {
 	for (size_t i = 0; i < n; ++i) {
 		Symbol symbol;
 		is >> symbol;
-		non_terminal_symbols.insert(std::move(symbol));
+		terminal_symbols.insert(std::move(symbol));
 	}
 
 	is >> n;
@@ -91,14 +101,14 @@ std::istream& operator>>(std::istream& is, Grammar& grammar) {
 			to.push_back(std::move(symbol));
 		}
 
-		production_rules.emplace(std::move(from), std::move(to));
+		production_rules[from].insert(std::move(to));
 	}
 
 	is >> start_symbol;
 
 	grammar = Grammar{
-		terminal_symbols,
 		non_terminal_symbols,
+		terminal_symbols,
 		production_rules,
 		start_symbol
 	};
@@ -107,16 +117,18 @@ std::istream& operator>>(std::istream& is, Grammar& grammar) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Grammar& grammar) {
-	os << grammar.terminal_symbols_.size() << '\n';
-	join(grammar.terminal_symbols_, os, " ");
-	os << '\n' << grammar.non_terminal_symbols_.size() << '\n';
+	os << grammar.non_terminal_symbols_.size() << '\n';
 	join(grammar.non_terminal_symbols_, os, " ");
-	os << '\n' << grammar.production_rules_.size() << '\n';
-	for (auto&& [from, to] : grammar.production_rules_) {
-		join(from, os, " ");
-		os << " -> ";
-		join(to, os, " ");
-		os << '\n';
+	os << '\n' << grammar.terminal_symbols_.size() << '\n';
+	join(grammar.terminal_symbols_, os, " ");
+	os << '\n' << grammar.productionRulesCount() << '\n';
+	for (auto&& [from, tos] : grammar.production_rules_) {
+		for (auto&& to : tos) {
+			join(from, os, " ");
+			os << " -> ";
+			join(to, os, " ");
+			os << '\n';
+		}
 	}
 	os << grammar.start_symbol_ << '\n';
 	return os;
