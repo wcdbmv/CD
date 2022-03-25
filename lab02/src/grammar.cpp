@@ -24,8 +24,8 @@ Grammar::Grammar(
 		checkProductionRule_(from, to);
 	}
 
-	if (    start_symbol_.empty() && !non_terminal_symbols_.empty()
-	    || !non_terminal_symbols_.contains(start_symbol_)) {
+	if (!(start_symbol_.empty() && non_terminal_symbols_.empty()
+	      || non_terminal_symbols_.contains(start_symbol_))) {
 		throw std::invalid_argument("[Grammar::Grammar] S must be in N");
 	}
 }
@@ -51,6 +51,57 @@ void Grammar::checkProductionRule_(const String& from, const String& to) {
 }
 
 std::istream& operator>>(std::istream& is, Grammar& grammar) {
+	Alphabet terminal_symbols;
+	Alphabet non_terminal_symbols;
+	ProductionRules production_rules;
+	Symbol start_symbol;
+
+	size_t n;
+	is >> n;
+
+	for (size_t i = 0; i < n; ++i) {
+		Symbol symbol;
+		is >> symbol;
+		terminal_symbols.insert(std::move(symbol));
+	}
+
+	is >> n;
+
+	for (size_t i = 0; i < n; ++i) {
+		Symbol symbol;
+		is >> symbol;
+		non_terminal_symbols.insert(std::move(symbol));
+	}
+
+	is >> n;
+
+	for (size_t i = 0; i < n; ++i) {
+		String from, to;
+		Symbol symbol;
+		while ((is >> symbol), symbol != "->") {
+			from.push_back(std::move(symbol));
+		}
+
+		std::string line;
+		std::getline(is, line);
+		std::stringstream ss{line};
+
+		while (ss >> symbol) {
+			to.push_back(std::move(symbol));
+		}
+
+		production_rules.emplace(std::move(from), std::move(to));
+	}
+
+	is >> start_symbol;
+
+	grammar = Grammar{
+		terminal_symbols,
+		non_terminal_symbols,
+		production_rules,
+		start_symbol
+	};
+
 	return is;
 }
 

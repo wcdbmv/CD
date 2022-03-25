@@ -4,7 +4,7 @@
 
 
 int main() {
-	Grammar grammar{
+	/*Grammar grammar{
 		{"a", "b", "c"},
 		{"A", "B", "C"},
 		{
@@ -13,7 +13,9 @@ int main() {
 			{{"C", "a"}, {"a"}},
 		},
 		"A",
-	};
+	};*/
 
+	Grammar grammar;
+	std::cin >> grammar;
 	std::cout << grammar;
 }
