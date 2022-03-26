@@ -137,6 +137,9 @@ std::ostream& operator<<(std::ostream& os, const Grammar& grammar) {
 Grammar Grammar::readFromFile(const std::filesystem::path& path) {
 	Grammar grammar;
 	std::ifstream stream{path};
+	if (!stream) {
+		throw std::invalid_argument("[Grammar::readFromFile] " + path.string() + ": no such file");
+	}
 	stream >> grammar;
 	return grammar;
 }

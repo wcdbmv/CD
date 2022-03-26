@@ -6,184 +6,54 @@
 
 namespace {
 
-bool sTest1() {
-	// https://www.csd.uwo.ca/~mmorenom/CS447/Lectures/Syntax.html/node8.html
+using Callback = std::function<void(ContextFreeGrammar&)>;
+using CallbackRef = const Callback&;
 
-	ContextFreeGrammar grammar{
-		Grammar{
-			{"A", "5"},
-			{"a", "b", "c", "d"},
-			{
-				{{"5"}, {{"A", "a"}, {"b"}}},
-				{{"A"}, {{"A", "c"}, {"A", "a", "d"}, {"b", "d"}, kEpsilon}},
-			},
-			"5",
-		}
-	};
+bool sTest(
+	const std::filesystem::path& grammar_path,
+	const std::filesystem::path& result_path,
+	const std::filesystem::path& expected_path,
+	CallbackRef callback
+) {
+	ContextFreeGrammar grammar{Grammar::readFromFile(grammar_path)};
+	const ContextFreeGrammar expected{Grammar::readFromFile(expected_path)};
 
-	grammar.eliminateLeftRecursion();
+	callback(grammar);
 
-	return grammar == Grammar{
-		{"A", "A'", "5"},
-		{"a", "b", "c", "d"},
-		{
-			{{"5"}, {{"A", "a"}, {"b"}}},
-			{{"A"}, {{"b", "d", "A'"}, {"A'"}}},
-			{{"A'"}, {{"c", "A'"}, {"a", "d", "A'"}, kEpsilon}},
-		},
-		"5",
-	};
+	grammar.writeToFile(result_path);
+
+	return grammar == expected;
 }
 
-bool sTest2() {
-	// [2] стр. 254
-
-	ContextFreeGrammar grammar{
-		Grammar{
-			{"E", "T", "_F"},
-			{"(", ")", "*", "+", "id"},
-			{
-				{{"E"}, {{"E", "+", "T"}, {"T"}}},
-				{{"T"}, {{"T", "*", "_F"}, {"_F"}}},
-				{{"_F"}, {{"(", "E", ")"}, {"id"}}},
-			},
-			"E",
-		}
+bool sEliminateLeftRecursionTest(size_t i) {
+	const auto filepath = [i](const std::string& name) {
+		return "../tests/ELR-" + std::to_string(i) + "-" + name + ".txt";
 	};
-
-	grammar.eliminateLeftRecursion();
-
-	return grammar == Grammar{
-		{"E", "E'", "T", "T'", "_F"},
-		{"(", ")", "*", "+", "id"},
-		{
-			{{"E"}, {{"T", "E'"}}},
-			{{"E'"}, {{"+", "T", "E'"}, kEpsilon}},
-			{{"T"}, {{"_F", "T'"}}},
-			{{"T'"}, {{"*", "_F", "T'"}, kEpsilon}},
-			{{"_F"}, {{"(", "E", ")"}, {"id"}}},
-		},
-		"E",
-	};
+	return sTest(filepath("grammar"), filepath("eliminated"), filepath("expected"), [](ContextFreeGrammar& grammar) {
+		grammar.eliminateLeftRecursion();
+	});
 }
 
-bool sTest3() {
-	// [1] стр. 184
-
-	ContextFreeGrammar grammar{
-		Grammar{
-			{"E", "E'", "T", "T'", "F"},
-			{"(", ")", "*", "+", "a"},
-			{
-				{{"E"}, {{"T"}, {"T", "E'"}}},
-				{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
-				{{"T"}, {{"F"}, {"F", "T'"}}},
-				{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
-				{{"F"}, {{"(", "E", ")"}, {"a"}}},
-			},
-			"E",
-		}
+bool sGreibachNormalFormTest(size_t i) {
+	const auto filepath = [i](const std::string& name) {
+		return "../tests/GNF-" + std::to_string(i) + "-" + name + ".txt";
 	};
-
-	grammar.greibachNormalForm();
-
-	return grammar == Grammar{
-		{"E", "E'", "T", "T'", "F", ")'"},
-		{"(", ")", "*", "+", "a"},
-		{
-			{{"E"}, {{"(", "E", ")'"}, {"a"}, {"(", "E", ")'", "T'"}, {"a", "T'"}, {"(", "E", ")'", "E'"}, {"a", "E'"}, {"(", "E", ")'", "T'", "E'"}, {"a", "T'", "E'"}}},
-			{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
-			{{"T"}, {{"(", "E", ")'"}, {"a"}, {"(", "E", ")'", "T'"}, {"a", "T'"}}},
-			{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
-			{{"F"}, {{"(", "E", ")'"}, {"a"}}},
-			{{")'"}, {{")"}}},
-		},
-		"E",
-	};
+	return sTest(filepath("grammar"), filepath("normalized"), filepath("expected"), [](ContextFreeGrammar& grammar) {
+		grammar.greibachNormalForm();
+	});
 }
 
 }  // namespace
 
 
 int main() {
-	/*Grammar grammar{
-		{"A", "B", "C"},
-		{"a", "b", "c"},
-		{
-			{{"A"}, {"A", "a"}},
-			{{"B"}, {"b", "B"}},
-			{{"C", "a"}, {"a"}},
-		},
-		"A",
-	};*/
+	std::cout << "Test ELR-1: " << (sEliminateLeftRecursionTest(1) ? "passed" : "failed") << std::endl;
+	std::cout << "Test ELR-2: " << (sEliminateLeftRecursionTest(2) ? "passed" : "failed") << std::endl;
+	std::cout << "Test GNF-1: " << (sGreibachNormalFormTest(1) ? "passed" : "failed") << std::endl;
 
-	std::cout << "Test 1 " << (sTest1() ? "passed" : "failed") << std::endl;
-	std::cout << "Test 2 " << (sTest2() ? "passed" : "failed") << std::endl;
-	std::cout << "Test 3 " << (sTest3() ? "passed" : "failed") << std::endl;
-
-	auto grammar = Grammar::readFromFile("../tests/1.txt");
-	ContextFreeGrammar grammar1{grammar};
-	grammar1.eliminateLeftRecursion();
-	grammar1.writeToFile("../tests/1-.txt");
-
-	grammar = Grammar::readFromFile("../tests/2.txt");
-	ContextFreeGrammar grammar2{grammar};
-	grammar2.eliminateLeftRecursion();
-	grammar2.writeToFile("../tests/2-.txt");
-
-	grammar = Grammar::readFromFile("../tests/3.txt");
-	ContextFreeGrammar grammar3{grammar};
-	grammar3.eliminateLeftRecursion();
-	grammar3.writeToFile("../tests/3-.txt");
-
-	grammar = Grammar::readFromFile("../tests/4.txt");
-	ContextFreeGrammar grammar4{grammar};
-	grammar4.eliminateLeftRecursion();
-	grammar4.writeToFile("../tests/4-.txt");
-
-	/*Graph graph{
-		{"1", "2", "3", "4", "5", "6", "7", "8", "9"},
-		{
-			{"1", {"5", "8"}},
-			{"3", {"6", "7"}},
-			{"5", {"8", "9"}},
-			{"6", {"9"}},
-		},
-	};*/
-
-	Graph graph{
-		{"2", "3", "5", "7", "8", "9", "10", "11"},
-		{
-			{"3", {"8", "10"}},
-			{"5", {"11"}},
-			{"7", {"8", "11"}},
-			{"8", {"9"}},
-			{"11", {"2", "9", "10"}},
-		},
-	};
-
-	auto order = graph.topologicalSort();
-
-	for (auto&& i : order) {
-		std::cout << i << std::endl;
+	for (size_t i = 1; i <= 4; ++i) {
+		ContextFreeGrammar grammar{Grammar::readFromFile("../tests/" + std::to_string(i) + ".txt")};
+		grammar.eliminateLeftRecursion();
+		grammar.writeToFile("../tests/" + std::to_string(i) + "-.txt");
 	}
-
-	ContextFreeGrammar gtest{
-		Grammar{
-			{"E", "E'", "T", "T'", "F"},
-			{"(", ")", "*", "+", "a"},
-			{
-				{{"E"}, {{"T"}, {"T", "E'"}}},
-				{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
-				{{"T"}, {{"F"}, {"F", "T'"}}},
-				{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
-				{{"F"}, {{"(", "E", ")"}, {"a"}}},
-			},
-			"E",
-		}
-	};
-
-	gtest.greibachNormalForm();
-
-	std::cout << gtest;
 }

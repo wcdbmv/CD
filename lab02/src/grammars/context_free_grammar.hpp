@@ -7,6 +7,13 @@
 
 class ContextFreeGrammar : public Grammar {
 public:
+	explicit ContextFreeGrammar(
+		Alphabet non_terminal_symbols = {},
+		Alphabet terminal_symbols = {},
+		ProductionRules production_rules = {},
+		Symbol start_symbol = {}
+	);
+
 	explicit ContextFreeGrammar(const Grammar& other);
 	explicit ContextFreeGrammar(Grammar&& other);
 
@@ -24,6 +31,5 @@ protected:
 		ProductionRules& new_production_rules
 	);
 
-public:
 	String calcBestLinearOrder_() const;
 };

@@ -5,6 +5,22 @@
 #include <graph/graph.hpp>
 
 
+ContextFreeGrammar::ContextFreeGrammar(
+	Alphabet non_terminal_symbols,
+	Alphabet terminal_symbols,
+	ProductionRules production_rules,
+	Symbol start_symbol
+)
+	: Grammar{
+		std::move(non_terminal_symbols),
+		std::move(terminal_symbols),
+		std::move(production_rules),
+		std::move(start_symbol),
+	}
+{
+	checkContextFree_();
+}
+
 ContextFreeGrammar::ContextFreeGrammar(const Grammar& other)
 	: Grammar{other}
 {
