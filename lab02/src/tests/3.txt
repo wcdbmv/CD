@@ -1,0 +1,11 @@
+2
+A S
+3
+a b c
+4
+A -> S a
+S -> S b
+S -> A c
+S -> b
+S ->
+S

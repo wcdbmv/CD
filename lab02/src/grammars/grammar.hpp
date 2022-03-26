@@ -19,6 +19,8 @@ public:
 	friend std::istream& operator>>(std::istream& is, Grammar& grammar);
 	friend std::ostream& operator<<(std::ostream& os, const Grammar& grammar);
 
+	bool operator==(const Grammar& other) const = default;
+
 	static Grammar readFromFile(const std::filesystem::path& path);
 	void writeToFile(const std::filesystem::path& path) const;
 

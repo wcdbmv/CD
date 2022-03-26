@@ -34,4 +34,4 @@ struct std::hash<Vector<T>> {
 
 using ProductionRules = UMap<String, Set<String>>;
 
-const Symbol kEpsilon = "";
+const String kEpsilon{};

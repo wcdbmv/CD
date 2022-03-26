@@ -1,0 +1,11 @@
+2
+S _A
+4
+a b c d
+5
+S -> _A a
+S -> b
+_A -> _A c
+_A -> S d
+_A ->
+S
