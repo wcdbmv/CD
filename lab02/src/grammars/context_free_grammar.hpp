@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <grammars/grammar.hpp>
 
 
@@ -9,6 +11,8 @@ public:
 	explicit ContextFreeGrammar(Grammar&& other);
 
 	void eliminateLeftRecursion();
+
+	void greibachNormalForm(std::optional<String> mb_order = std::nullopt);
 
 protected:
 	void checkContextFree_();

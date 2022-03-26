@@ -148,3 +148,79 @@ String ContextFreeGrammar::calcBestLinearOrder_() const {
 
 	return graph.topologicalSort();
 }
+
+void ContextFreeGrammar::greibachNormalForm(std::optional<String> mb_order) {
+	if (mb_order && mb_order->size() != non_terminal_symbols_.size()) {
+		throw std::invalid_argument("[ContextFreeGrammar::greibachNormalForm] mb_order must be full");
+	}
+
+	if (non_terminal_symbols_.size() <= 1) {
+		return;
+	}
+
+	auto order = mb_order ? std::move(*mb_order) : calcBestLinearOrder_();
+
+	for (auto i = order.size() - 2; i != 0; --i) {
+		const auto& Ai = order[i];
+		for (auto j = i + 1; j < order.size(); ++j) {
+			const auto Aj = order[j];
+
+			auto P = production_rules_[{Ai}];
+
+			for (auto&& Aj_alpha : production_rules_[{Ai}]) {
+				if (Aj_alpha.empty() || Aj_alpha.front() != Aj) {
+					continue;
+				}
+
+				P.erase(Aj_alpha);
+
+				auto alpha = String(Aj_alpha.begin() + 1, Aj_alpha.end());
+
+				for (auto&& beta : production_rules_[{Aj}]) {
+					auto beta_alpha = beta;
+					beta_alpha.insert(beta_alpha.end(), alpha.begin(), alpha.end());
+					P.insert(std::move(beta_alpha));
+				}
+			}
+
+			production_rules_[{Ai}] = std::move(P);
+		}
+	}
+
+	auto old_non_terminal_symbols = non_terminal_symbols_;
+	for (auto&& A : old_non_terminal_symbols) {
+		auto P = production_rules_[{A}];
+		for (auto&& aXX : production_rules_[{A}]) {
+			if (aXX.size() <= 2) {
+				continue;
+			}
+			bool is_continue = true;
+			for (auto&& Xj : aXX) {
+				if (terminal_symbols_.contains(Xj)) {
+					is_continue = false;
+					break;
+				}
+			}
+			if (is_continue) {
+				continue;
+			}
+
+			P.erase(aXX);
+
+			auto aX1X1 = aXX;
+			for (auto Xj = aX1X1.begin() + 1; Xj != aX1X1.end(); ++Xj) {
+				if (!terminal_symbols_.contains(*Xj)) {
+					continue;
+				}
+
+				auto Xj1 = *Xj + '\'';
+				non_terminal_symbols_.insert(Xj1);
+				production_rules_[{Xj1}].insert({*Xj});
+				*Xj = Xj1;
+			}
+
+			P.insert(aX1X1);
+		}
+		production_rules_[{A}] = std::move(P);
+	}
+}

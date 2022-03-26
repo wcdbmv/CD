@@ -67,6 +67,41 @@ bool sTest2() {
 	};
 }
 
+bool sTest3() {
+	// [1] стр. 184
+
+	ContextFreeGrammar grammar{
+		Grammar{
+			{"E", "E'", "T", "T'", "F"},
+			{"(", ")", "*", "+", "a"},
+			{
+				{{"E"}, {{"T"}, {"T", "E'"}}},
+				{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
+				{{"T"}, {{"F"}, {"F", "T'"}}},
+				{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
+				{{"F"}, {{"(", "E", ")"}, {"a"}}},
+			},
+			"E",
+		}
+	};
+
+	grammar.greibachNormalForm();
+
+	return grammar == Grammar{
+		{"E", "E'", "T", "T'", "F", ")'"},
+		{"(", ")", "*", "+", "a"},
+		{
+			{{"E"}, {{"(", "E", ")'"}, {"a"}, {"(", "E", ")'", "T'"}, {"a", "T'"}, {"(", "E", ")'", "E'"}, {"a", "E'"}, {"(", "E", ")'", "T'", "E'"}, {"a", "T'", "E'"}}},
+			{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
+			{{"T"}, {{"(", "E", ")'"}, {"a"}, {"(", "E", ")'", "T'"}, {"a", "T'"}}},
+			{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
+			{{"F"}, {{"(", "E", ")'"}, {"a"}}},
+			{{")'"}, {{")"}}},
+		},
+		"E",
+	};
+}
+
 }  // namespace
 
 
@@ -84,6 +119,7 @@ int main() {
 
 	std::cout << "Test 1 " << (sTest1() ? "passed" : "failed") << std::endl;
 	std::cout << "Test 2 " << (sTest2() ? "passed" : "failed") << std::endl;
+	std::cout << "Test 3 " << (sTest3() ? "passed" : "failed") << std::endl;
 
 	auto grammar = Grammar::readFromFile("../tests/1.txt");
 	ContextFreeGrammar grammar1{grammar};
@@ -147,9 +183,7 @@ int main() {
 		}
 	};
 
-	order = gtest.calcBestLinearOrder_();
-	std::cout << "hmm\n";
-	for (auto&& i : order) {
-		std::cout << i << std::endl;
-	}
+	gtest.greibachNormalForm();
+
+	std::cout << gtest;
 }
