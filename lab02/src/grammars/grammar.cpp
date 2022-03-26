@@ -33,7 +33,7 @@ Grammar::Grammar(
 	}
 }
 
-void Grammar::checkProductionRule_(const String& from, const String& to) {
+void Grammar::checkProductionRule_(const String& from, const String& to) const {
 	bool was_non_terminal = false;
 	for (auto&& symbol : from) {
 		if (non_terminal_symbols_.contains(symbol)) {

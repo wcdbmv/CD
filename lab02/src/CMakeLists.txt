@@ -11,7 +11,10 @@ set(
 	HEADERS
 	grammars/context_free_grammar.hpp
 	grammars/grammar.hpp
+	graph/graph.hpp
 	types/common.hpp
+	types/grammar.hpp
+	types/graph.hpp
 	utils/io_utils.hpp
 	utils/set_utils.hpp
 )
@@ -20,6 +23,7 @@ set(
 	SOURCES
 	grammars/context_free_grammar.cpp
 	grammars/grammar.cpp
+	graph/graph.cpp
 )
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)

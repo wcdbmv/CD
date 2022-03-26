@@ -4,7 +4,7 @@
 #include <istream>
 #include <ostream>
 
-#include <types/common.hpp>
+#include <types/grammar.hpp>
 
 
 class Grammar {
@@ -42,5 +42,5 @@ protected:
 	// S — стартовый (или начальный) символ грамматики из набора нетерминалов
 	Symbol start_symbol_;
 
-	void checkProductionRule_(const String& from, const String& to);
+	void checkProductionRule_(const String& from, const String& to) const;
 };

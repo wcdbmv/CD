@@ -19,4 +19,6 @@ protected:
 		Alphabet& new_non_terminal_symbols,
 		ProductionRules& new_production_rules
 	);
+
+	String calcBestLinearOrder_();
 };

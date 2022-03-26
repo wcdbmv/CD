@@ -105,3 +105,21 @@ void ContextFreeGrammar::eliminateImmediateLeftRecursion_(
 		}
 	}
 }
+
+String ContextFreeGrammar::calcBestLinearOrder_() {
+	String order;
+
+	if (non_terminal_symbols_.empty()) {
+		return order;
+	}
+
+	auto it = non_terminal_symbols_.begin();
+	order.push_back(*it);
+
+	for (it = std::next(it); it != non_terminal_symbols_.end(); ++it) {
+		auto candidate = order.begin();
+		for (; candidate != order.end(); ++candidate) {
+
+		}
+	}
+}

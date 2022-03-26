@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <grammars/context_free_grammar.hpp>
+#include <graph/graph.hpp>
 
 
 namespace {
@@ -103,4 +104,31 @@ int main() {
 	ContextFreeGrammar grammar4{grammar};
 	grammar4.eliminateLeftRecursion();
 	grammar4.writeToFile("../tests/4-.txt");
+
+	/*Graph graph{
+		{"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+		{
+			{"1", {"5", "8"}},
+			{"3", {"6", "7"}},
+			{"5", {"8", "9"}},
+			{"6", {"9"}},
+		},
+	};*/
+
+	Graph graph{
+		{"2", "3", "5", "7", "8", "9", "10", "11"},
+		{
+			{"3", {"8", "10"}},
+			{"5", {"11"}},
+			{"7", {"8", "11"}},
+			{"8", {"9"}},
+			{"11", {"2", "9", "10"}},
+		},
+	};
+
+	auto order = graph.topologicalSort();
+
+	for (auto&& i : order) {
+		std::cout << i << std::endl;
+	}
 }
