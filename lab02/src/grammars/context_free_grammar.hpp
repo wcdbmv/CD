@@ -20,5 +20,6 @@ protected:
 		ProductionRules& new_production_rules
 	);
 
-	String calcBestLinearOrder_();
+public:
+	String calcBestLinearOrder_() const;
 };

@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include <graph/graph.hpp>
+
 
 ContextFreeGrammar::ContextFreeGrammar(const Grammar& other)
 	: Grammar{other}
@@ -106,20 +108,43 @@ void ContextFreeGrammar::eliminateImmediateLeftRecursion_(
 	}
 }
 
-String ContextFreeGrammar::calcBestLinearOrder_() {
+String ContextFreeGrammar::calcBestLinearOrder_() const {
 	String order;
 
 	if (non_terminal_symbols_.empty()) {
 		return order;
 	}
 
-	auto it = non_terminal_symbols_.begin();
-	order.push_back(*it);
+	Vertices vertices = non_terminal_symbols_;
+	Edges edges;
 
-	for (it = std::next(it); it != non_terminal_symbols_.end(); ++it) {
-		auto candidate = order.begin();
-		for (; candidate != order.end(); ++candidate) {
+	UMap<Vertex, bool> used;
 
+	std::function<void(const Symbol& A, const Symbol& A1)> dfs;
+	dfs = [&](const Symbol& A, const Symbol& A1) {
+		used[A1] = true;
+		if (auto adj = production_rules_.find({A1}); adj != production_rules_.end()) {
+			for (auto&& to : adj->second) {
+				if (to.empty() || !non_terminal_symbols_.contains(to.front())) {
+					continue;
+				}
+
+				const auto& B = to.front();
+				edges[A].insert(B);
+
+				if (!used[B]) {
+					dfs(A, B);
+				}
+			}
 		}
+	};
+
+	for (auto&& A : non_terminal_symbols_) {
+		used.clear();
+		dfs(A, A);
 	}
+
+	Graph graph{std::move(vertices), std::move(edges)};
+
+	return graph.topologicalSort();
 }

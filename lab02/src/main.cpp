@@ -131,4 +131,25 @@ int main() {
 	for (auto&& i : order) {
 		std::cout << i << std::endl;
 	}
+
+	ContextFreeGrammar gtest{
+		Grammar{
+			{"E", "E'", "T", "T'", "F"},
+			{"(", ")", "*", "+", "a"},
+			{
+				{{"E"}, {{"T"}, {"T", "E'"}}},
+				{{"E'"}, {{"+", "T"}, {"+", "T", "E'"}}},
+				{{"T"}, {{"F"}, {"F", "T'"}}},
+				{{"T'"}, {{"*", "F"}, {"*", "F", "T'"}}},
+				{{"F"}, {{"(", "E", ")"}, {"a"}}},
+			},
+			"E",
+		}
+	};
+
+	order = gtest.calcBestLinearOrder_();
+	std::cout << "hmm\n";
+	for (auto&& i : order) {
+		std::cout << i << std::endl;
+	}
 }
