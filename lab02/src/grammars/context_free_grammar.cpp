@@ -45,10 +45,6 @@ void ContextFreeGrammar::eliminateLeftRecursion() {
 	auto new_non_terminal_symbols = non_terminal_symbols_;
 	auto new_production_rules = production_rules_;
 
-	// TODO :
-	// Если ε присутствовал в языке исходной грамматики,
-	// добавим новый начальный символ S′ и правила S′ → S ∣ ε
-
 	for (auto i = non_terminal_symbols_.begin(); i != non_terminal_symbols_.end(); ++i) {
 		const auto& Ai = *i;
 		for (auto j = non_terminal_symbols_.begin(); j != i; ++j) {

@@ -54,6 +54,8 @@ int main() {
 	for (size_t i = 1; i <= 4; ++i) {
 		ContextFreeGrammar grammar{Grammar::readFromFile("../tests/" + std::to_string(i) + ".txt")};
 		grammar.eliminateLeftRecursion();
-		grammar.writeToFile("../tests/" + std::to_string(i) + "-.txt");
+		const auto path = "../tests/" + std::to_string(i) + "-.txt";
+		grammar.writeToFile(path);
+		std::cout << "Written in path: " << path << std::endl;
 	}
 }
