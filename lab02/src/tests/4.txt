@@ -1,0 +1,15 @@
+3
+S V Z
+7
+a b c d e f g
+9
+S -> S a V
+S -> S b V
+S -> V V
+V -> V d Z
+V -> V c Z
+V -> Z Z
+Z -> S S e
+Z -> g
+Z -> f
+S
