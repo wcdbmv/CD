@@ -197,11 +197,11 @@ struct Factor : GrammarElement {
 		std::cout << std::string(depth, '\t') << "Factor: " << str << std::endl;
 
 		Node tree{"Factor", {}};
-		if (auto&& [node, sv] = ::accept<Identifier>(str, depth + 1); node) {
+		if (auto&& [node, sv] = ::accept<Constant>(str, depth + 1); node) {
 			tree.children.push_back(std::move(*node));
 			return {tree, sv};
 		}
-		if (auto&& [node, sv] = ::accept<Constant>(str, depth + 1); node) {
+		if (auto&& [node, sv] = ::accept<Identifier>(str, depth + 1); node) {
 			tree.children.push_back(std::move(*node));
 			return {tree, sv};
 		}
@@ -297,14 +297,6 @@ struct Identifier : GrammarElement {
 		Node tree{"Identifier", {}};
 		for (auto&& identifier: kIdentifiers) {
 			if (str.starts_with(identifier)) {
-				for (auto constant : kConstants) {
-					if (str.starts_with(constant)) {
-						tree.data = "Constant";
-						tree.children.push_back({std::string(constant), {}});
-						return {tree, str.substr(constant.size())};
-					}
-				}
-
 				tree.children.push_back({std::string(identifier), {}});
 				return {tree, str.substr(identifier.size())};
 			}
@@ -321,14 +313,6 @@ struct Constant : GrammarElement {
 		Node tree{"Constant", {}};
 		for (auto&& constant: kConstants) {
 			if (str.starts_with(constant)) {
-				for (auto identifier : kIdentifiers) {
-					if (str.starts_with(identifier)) {
-						tree.data = "Identifier";
-						tree.children.push_back({std::string(identifier), {}});
-						return {tree, str.substr(identifier.size())};
-					}
-				}
-
 				tree.children.push_back({std::string(constant), {}});
 				return {tree, str.substr(constant.size())};
 			}
