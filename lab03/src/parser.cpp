@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <span>
 
 
 namespace {
@@ -226,99 +227,53 @@ struct Factor : GrammarElement {
 	}
 };
 
+ReturnType sAccept(const std::string& label, std::span<const std::string_view> array, std::string_view str, size_t depth) {
+	std::cout << std::string(depth, '\t') << label << ": " << str << std::endl;
+
+	Node tree{label, {}};
+	for (auto&& item: array) {
+		if (str.starts_with(item)) {
+			tree.children.push_back({std::string(item), {}});
+			return {tree, str.substr(item.size())};
+		}
+	}
+
+	return {std::nullopt, str};
+}
+
 struct RelationOperation : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "RelationOperation: " << str << std::endl;
-
-		Node tree{"RelationOperation", {}};
-		for (auto&& op: kRelationalOperators) {
-			if (str.starts_with(op)) {
-				tree.children.push_back({std::string(op), {}});
-				return {tree, str.substr(op.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("RelationOperation", kRelationalOperators, str, depth);
 	}
 };
 
 struct Sign : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Sign: " << str << std::endl;
-
-		Node tree{"Sign", {}};
-		for (auto&& sign: kSigns) {
-			if (str.starts_with(sign)) {
-				tree.children.push_back({std::string(sign), {}});
-				return {tree, str.substr(sign.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("Sign", kSigns, str, depth);
 	}
 };
 
 struct AdditionOperation : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "AdditionOperation: " << str << std::endl;
-
-		Node tree{"AdditionOperation", {}};
-		for (auto&& op: kAdditionOperators) {
-			if (str.starts_with(op)) {
-				tree.children.push_back({std::string(op), {}});
-				return {tree, str.substr(op.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("AdditionOperation", kAdditionOperators, str, depth);
 	}
 };
 
 struct MultiplicationOperation : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "MultiplicationOperation: " << str << std::endl;
-
-		Node tree{"MultiplicationOperation", {}};
-		for (auto&& op: kMultiplicationOperators) {
-			if (str.starts_with(op)) {
-				tree.children.push_back({std::string(op), {}});
-				return {tree, str.substr(op.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("MultiplicationOperation", kMultiplicationOperators, str, depth);
 	}
 };
 
 struct Identifier : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Identifier: " << str << std::endl;
-
-		Node tree{"Identifier", {}};
-		for (auto&& identifier: kIdentifiers) {
-			if (str.starts_with(identifier)) {
-				tree.children.push_back({std::string(identifier), {}});
-				return {tree, str.substr(identifier.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("Identifier", kIdentifiers, str, depth);
 	}
 };
 
 struct Constant : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Constant: " << str << std::endl;
-
-		Node tree{"Constant", {}};
-		for (auto&& constant: kConstants) {
-			if (str.starts_with(constant)) {
-				tree.children.push_back({std::string(constant), {}});
-				return {tree, str.substr(constant.size())};
-			}
-		}
-
-		return {std::nullopt, str};
+		return sAccept("Constant", kConstants, str, depth);
 	}
 };
 
