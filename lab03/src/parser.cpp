@@ -47,18 +47,14 @@ struct Tail;
 struct Term1;
 struct Term;
 
-constexpr bool firstIs(std::string_view str, char c) {
-	return !str.empty() && str.front() == c;
-}
-
 struct Block : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
 		std::cout << std::string(depth, '\t') << "Block: " << str << std::endl;
 
 		Node tree{"Block", {}};
-		if (firstIs(str, '{') && str.back() == '}') {
+		if (str.starts_with('{') && str.ends_with('}')) {
 			if (auto&& [node, sv] = ::accept<OperatorsList>(str.substr(1), depth + 1); node) {
-				if (firstIs(sv, '}')) {
+				if (sv.starts_with('}')) {
 					tree.children.push_back({"{", {}});
 					tree.children.push_back(std::move(*node));
 					tree.children.push_back({"}", {}});
@@ -93,7 +89,7 @@ struct Tail : GrammarElement {
 		std::cout << std::string(depth, '\t') << "Tail: " << str << std::endl;
 
 		Node tree{"Tail", {}};
-		if (firstIs(str, ';')) {
+		if (str.starts_with(';')) {
 			if (auto&& [node1, sv1] = ::accept<Operator>(str.substr(1), depth + 1); node1) {
 				if (auto&& [node2, sv2] = ::accept<Tail>(sv1, depth + 2); node2) {
 					tree.children.push_back({";", {}});
@@ -115,7 +111,7 @@ struct Operator : GrammarElement {
 
 		Node tree{"Operator", {}};
 		if (auto&& [node1, sv1] = ::accept<Identifier>(str, depth + 1); node1) {
-			if (firstIs(sv1, '=')) {
+			if (sv1.starts_with('=')) {
 				if (auto&& [node2, sv2] = ::accept<Expression>(sv1.substr(1), depth + 2); node2) {
 					tree.children.push_back(std::move(*node1));
 					tree.children.push_back({"=", {}});
@@ -209,9 +205,9 @@ struct Factor : GrammarElement {
 			tree.children.push_back(std::move(*node));
 			return {tree, sv};
 		}
-		if (firstIs(str, '(')) {
+		if (str.starts_with('(')) {
 			if (auto&& [node, sv] = ::accept<SimpleExpression>(str.substr(1), depth + 1); node) {
-				if (firstIs(sv, ')')) {
+				if (sv.starts_with(')')) {
 					tree.children.push_back({"(", {}});
 					tree.children.push_back(std::move(*node));
 					tree.children.push_back({")", {}});
