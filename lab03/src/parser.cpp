@@ -30,312 +30,185 @@ ReturnType accept(std::string_view str, size_t depth)
 	if constexpr (std::derived_from<T, GrammarElement>) {
 		return T{}.accept(str, depth);
 	} else {
-		return {};
+		return {std::nullopt, str};
 	}
 }
 
 struct Constant;
-struct Expression1;
 struct Expression;
+struct Expression1;
 struct Factor;
 struct Identifier;
 struct Operator;
 struct OperatorsList;
 struct Sign;
-struct SimpleExpression1;
 struct SimpleExpression;
+struct SimpleExpression1;
 struct Tail;
-struct Term1;
 struct Term;
+struct Term1;
 
-struct Block : GrammarElement {
+template <char C>
+struct Char : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Block: " << str << std::endl;
+		std::cout << std::string(depth, '\t') << "Char<'" << C << "'>: " << str << std::endl;
 
-		Node tree{"Block", {}};
-		if (str.starts_with('{') && str.ends_with('}')) {
-			if (auto&& [node, sv] = ::accept<OperatorsList>(str.substr(1), depth + 1); node) {
-				if (sv.starts_with('}')) {
-					tree.children.push_back({"{", {}});
-					tree.children.push_back(std::move(*node));
-					tree.children.push_back({"}", {}});
-					return {tree, sv.substr(1)};
-				}
-			}
+		Node tree{std::string{C}, {}};
+		if (str.starts_with(C)) {
+			return {tree, str.substr(1)};
 		}
 
 		return {std::nullopt, str};
 	}
 };
 
-struct OperatorsList : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "OperatorList: " << str << std::endl;
+using LeftCurlyBracket = Char<'{'>;
+using RightCurlyBracket = Char<'}'>;
+using Semicolon = Char<';'>;
+using Assign = Char<'='>;
+using LeftParenthesis = Char<'('>;
+using RightParenthesis = Char<')'>;
 
-		Node tree{"OperatorsList", {}};
-		if (auto&& [node1, sv1] = ::accept<Operator>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Tail>(sv1, depth + 2); node2) {
-				tree.children.push_back(std::move(*node1));
-				tree.children.push_back(std::move(*node2));
-				return {tree, sv2};
-			}
-		}
+// Yes, I lost my mind
 
-		return {std::nullopt, str};
+#define ACCEPT1(T) \
+	if (auto&& [node, sv] = ::accept<T>(str, depth + 1); node) { \
+		tree.children.push_back(std::move(*node)); \
+		return {tree, sv}; \
 	}
-};
 
-struct Tail : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Tail: " << str << std::endl;
-
-		Node tree{"Tail", {}};
-		if (str.starts_with(';')) {
-			if (auto&& [node1, sv1] = ::accept<Operator>(str.substr(1), depth + 1); node1) {
-				if (auto&& [node2, sv2] = ::accept<Tail>(sv1, depth + 2); node2) {
-					tree.children.push_back({";", {}});
-					tree.children.push_back(std::move(*node1));
-					tree.children.push_back(std::move(*node2));
-					return {tree, sv2};
-				}
-			}
-		}
-
-		tree.children.push_back({"ε", {}});
-		return {tree, str};
+#define ACCEPT2(T1, T2) \
+	if (auto&& [node1, sv1] = ::accept<T1>(str, depth + 1); node1) { \
+		if (auto&& [node2, sv2] = ::accept<T2>(sv1, depth + 2); node2) { \
+			tree.children.push_back(std::move(*node1)); \
+			tree.children.push_back(std::move(*node2)); \
+			return {tree, sv2}; \
+		} \
 	}
-};
+
+#define ACCEPT3(T1, T2, T3) \
+	if (auto&& [node1, sv1] = ::accept<T1>(str, depth + 1); node1) { \
+		if (auto&& [node2, sv2] = ::accept<T2>(sv1, depth + 2); node2) { \
+			if (auto&& [node3, sv3] = ::accept<T3>(sv2, depth + 3); node3) { \
+				tree.children.push_back(std::move(*node1)); \
+				tree.children.push_back(std::move(*node2)); \
+				tree.children.push_back(std::move(*node3)); \
+				return {tree, sv3}; \
+			} \
+		} \
+	}
+
+#define TREE(label) \
+	std::cout << std::string(depth, '\t') << label << ": " << str << std::endl; \
+	Node tree{label, {}};
+
+#define RETURN_ERROR \
+	return {std::nullopt, str};
+
+#define RETURN_EPS \
+	tree.children.push_back({"ε", {}}); \
+	return {tree, str};
+
+#define RETURN_EPS_OR_ERROR \
+	if constexpr (Eps) { \
+		RETURN_EPS \
+	} else { \
+		RETURN_ERROR \
+	}
+
+template <typename T1, typename T2, bool Eps = false>
+ReturnType accept(const std::string& label, std::string_view str, size_t depth) {
+	TREE(label)
+	ACCEPT2(T1, T2)
+	RETURN_EPS_OR_ERROR
+}
+
+template <typename T1, typename T2, typename T3, bool Eps = false>
+ReturnType accept(const std::string& label, std::string_view str, size_t depth) {
+	TREE(label)
+	ACCEPT3(T1, T2, T3)
+	RETURN_EPS_OR_ERROR
+}
+
+#define GRAMMAR_ELEMENT_FROM_SINGLE_RULE_BASE(name, label, ...) \
+	struct name : GrammarElement { \
+		ReturnType accept(std::string_view str, size_t depth) override { \
+			return ::accept<__VA_ARGS__>(label, str, depth); \
+		} \
+	};
+
+#define GRAMMAR_ELEMENT_FROM_SINGLE_RULE(name, ...) GRAMMAR_ELEMENT_FROM_SINGLE_RULE_BASE(name, #name, __VA_ARGS__)
+
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE(Block, LeftCurlyBracket, OperatorsList, RightCurlyBracket)
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE(OperatorsList, Operator, Tail)
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE(Tail, Semicolon, Operator, Tail, true)
 
 struct Operator : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Operator: " << str << std::endl;
-
-		Node tree{"Operator", {}};
-		if (auto&& [node1, sv1] = ::accept<Identifier>(str, depth + 1); node1) {
-			if (sv1.starts_with('=')) {
-				if (auto&& [node2, sv2] = ::accept<Expression>(sv1.substr(1), depth + 2); node2) {
-					tree.children.push_back(std::move(*node1));
-					tree.children.push_back({"=", {}});
-					tree.children.push_back(std::move(*node2));
-					return {tree, sv2};
-				}
-			}
-		}
-
-		if (auto&& [node, sv] = ::accept<Block>(str, depth + 1); node) {
-			tree.children.push_back(std::move(*node));
-			return {tree, sv};
-		}
-
-		return {std::nullopt, str};
+		TREE("Operator")
+		ACCEPT3(Identifier, Assign, Expression)
+		ACCEPT1(Block)
+		RETURN_ERROR
 	}
 };
 
-struct Expression : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Expression: " << str << std::endl;
-
-		Node tree{"Expression", {}};
-		if (auto&& [node1, sv1] = ::accept<SimpleExpression>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Expression1>(sv1, depth + 2); node2) {
-				tree.children.push_back(std::move(*node1));
-				tree.children.push_back(std::move(*node2));
-				return {tree, sv2};
-			}
-		}
-
-		return {std::nullopt, str};
-	}
-};
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE(Expression, SimpleExpression, Expression1)
 
 struct SimpleExpression : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "SimpleExpression: " << str << std::endl;
-
-		Node tree{"SimpleExpression", {}};
-		if (auto&& [node1, sv1] = ::accept<Term>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<SimpleExpression1>(sv1, depth + 2); node2) {
-				tree.children.push_back(std::move(*node1));
-				tree.children.push_back(std::move(*node2));
-				return {tree, sv2};
-			}
-		}
-
-		if (auto&& [node1, sv1] = ::accept<Sign>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Term>(sv1, depth + 2); node2) {
-				if (auto&& [node3, sv3] = ::accept<SimpleExpression1>(sv2, depth + 3); node3) {
-					tree.children.push_back(std::move(*node1));
-					tree.children.push_back(std::move(*node2));
-					tree.children.push_back(std::move(*node3));
-					return {tree, sv3};
-				}
-			}
-		}
-
-		return {std::nullopt, str};
+		TREE("SimpleExpression")
+		ACCEPT2(Term, SimpleExpression1)
+		ACCEPT3(Sign, Term, SimpleExpression1)
+		RETURN_ERROR
 	}
 };
 
-struct Term : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Term: " << str << std::endl;
-
-		Node tree{"Term", {}};
-		if (auto&& [node1, sv1] = ::accept<Factor>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Term1>(sv1, depth + 2); node2) {
-				tree.children.push_back(std::move(*node1));
-				tree.children.push_back(std::move(*node2));
-				return {tree, sv2};
-			}
-		}
-
-		return {std::nullopt, str};
-	}
-};
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE(Term, Factor, Term1)
 
 struct Factor : GrammarElement {
 	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Factor: " << str << std::endl;
-
-		Node tree{"Factor", {}};
-		if (auto&& [node, sv] = ::accept<Constant>(str, depth + 1); node) {
-			tree.children.push_back(std::move(*node));
-			return {tree, sv};
-		}
-		if (auto&& [node, sv] = ::accept<Identifier>(str, depth + 1); node) {
-			tree.children.push_back(std::move(*node));
-			return {tree, sv};
-		}
-		if (str.starts_with('(')) {
-			if (auto&& [node, sv] = ::accept<SimpleExpression>(str.substr(1), depth + 1); node) {
-				if (sv.starts_with(')')) {
-					tree.children.push_back({"(", {}});
-					tree.children.push_back(std::move(*node));
-					tree.children.push_back({")", {}});
-					return {tree, sv.substr(1)};
-				}
-			}
-		}
+		TREE("Factor")
+		ACCEPT1(Constant)
+		ACCEPT1(Identifier)
+		ACCEPT3(LeftParenthesis, SimpleExpression, RightParenthesis)
 		if (str.starts_with("not")) {
 			if (auto&& [node, sv] = ::accept<Factor>(str.substr(3), depth + 1); node) {
 				tree.children.push_back(std::move(*node));
 				return {tree, sv};
 			}
 		}
-
-		return {std::nullopt, str};
+		RETURN_ERROR
 	}
 };
 
 ReturnType sAccept(const std::string& label, std::span<const std::string_view> array, std::string_view str, size_t depth) {
-	std::cout << std::string(depth, '\t') << label << ": " << str << std::endl;
-
-	Node tree{label, {}};
+	TREE(label)
 	for (auto&& item: array) {
 		if (str.starts_with(item)) {
 			tree.children.push_back({std::string(item), {}});
 			return {tree, str.substr(item.size())};
 		}
 	}
-
-	return {std::nullopt, str};
+	RETURN_ERROR
 }
 
-struct RelationOperation : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("RelationOperation", kRelationalOperators, str, depth);
-	}
-};
+#define GRAMMAR_ELEMENT_FROM_ARRAY(name, array) \
+	struct name : GrammarElement { \
+		ReturnType accept(std::string_view str, size_t depth) override { \
+			return sAccept(#name, array, str, depth); \
+		} \
+	};
 
-struct Sign : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("Sign", kSigns, str, depth);
-	}
-};
+GRAMMAR_ELEMENT_FROM_ARRAY(RelationOperation, kRelationalOperators)
+GRAMMAR_ELEMENT_FROM_ARRAY(Sign, kSigns)
+GRAMMAR_ELEMENT_FROM_ARRAY(AdditionOperation, kAdditionOperators)
+GRAMMAR_ELEMENT_FROM_ARRAY(MultiplicationOperation, kMultiplicationOperators)
+GRAMMAR_ELEMENT_FROM_ARRAY(Identifier, kIdentifiers)
+GRAMMAR_ELEMENT_FROM_ARRAY(Constant, kConstants)
 
-struct AdditionOperation : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("AdditionOperation", kAdditionOperators, str, depth);
-	}
-};
-
-struct MultiplicationOperation : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("MultiplicationOperation", kMultiplicationOperators, str, depth);
-	}
-};
-
-struct Identifier : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("Identifier", kIdentifiers, str, depth);
-	}
-};
-
-struct Constant : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		return sAccept("Constant", kConstants, str, depth);
-	}
-};
-
-struct SimpleExpression1 : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "SimpleExpression': " << str << std::endl;
-
-		Node tree{"SimpleExpression'", {}};
-		if (auto&& [node1, sv1] = ::accept<AdditionOperation>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Term>(sv1, depth + 2); node2) {
-				if (auto&& [node3, sv3] = ::accept<SimpleExpression1>(sv2, depth + 3); node3) {
-					tree.children.push_back(std::move(*node1));
-					tree.children.push_back(std::move(*node2));
-					tree.children.push_back(std::move(*node3));
-					return {tree, sv3};
-				}
-			}
-		}
-
-		tree.children.push_back({"ε", {}});
-		return {tree, str};
-	}
-};
-
-struct Term1 : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Term': " << str << std::endl;
-
-		Node tree{"Term'", {}};
-		if (auto&& [node1, sv1] = ::accept<MultiplicationOperation>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<Factor>(sv1, depth + 2); node2) {
-				if (auto&& [node3, sv3] = ::accept<Term1>(sv2, depth + 3); node3) {
-					tree.children.push_back(std::move(*node1));
-					tree.children.push_back(std::move(*node2));
-					tree.children.push_back(std::move(*node3));
-					return {tree, sv3};
-				}
-			}
-		}
-
-		tree.children.push_back({"ε", {}});
-		return {tree, str};
-	}
-};
-
-struct Expression1 : GrammarElement {
-	ReturnType accept(std::string_view str, size_t depth) override {
-		std::cout << std::string(depth, '\t') << "Expression': " << str << std::endl;
-
-		Node tree{"Expression'", {}};
-		if (auto&& [node1, sv1] = ::accept<RelationOperation>(str, depth + 1); node1) {
-			if (auto&& [node2, sv2] = ::accept<SimpleExpression>(sv1, depth + 2); node2) {
-				tree.children.push_back(std::move(*node1));
-				tree.children.push_back(std::move(*node2));
-				return {tree, sv2};
-			}
-		}
-
-		tree.children.push_back({"ε", {}});
-		return {tree, str};
-	}
-};
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE_BASE(SimpleExpression1, "SimpleExpression'", AdditionOperation, Term, SimpleExpression1, true)
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE_BASE(Term1, "Term'", MultiplicationOperation, Factor, Term1, true)
+GRAMMAR_ELEMENT_FROM_SINGLE_RULE_BASE(Expression1, "Expression'", RelationOperation, SimpleExpression, true)
 
 }  // namespace
 
