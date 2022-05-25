@@ -33,7 +33,7 @@ const Vector<Tokens> kOperators = {
 	{"+'", "-'"},
 	{"+\"", "-\"", "&"},
 	{"<", "<=", "=", "/>", ">", ">="},
-	{"and", "or" , "xor"},
+	{"and", "or", "xor"},
 };
 
 const Tokens kPrefixes = {"abs", "not", "+'", "-'"};
@@ -66,7 +66,7 @@ Tokens sGetAllTokens() {
 	for (auto&& ops : kOperators) {
 		sInsert(all_tokens, ops);
 	}
-	sInsert(all_tokens, kPrefixes);
+	// sInsert(all_tokens, kPrefixes);
 	sInsert(all_tokens, kIdentifiers);
 	sInsert(all_tokens, kConstants);
 	all_tokens.insert({"(", ")", kMarker});

@@ -2,7 +2,7 @@
 
 \ProvidesClass{bmstu-gost-7-32}[202/02/25 BMSTU GOST 7.32-2017]
 
-\LoadClass[14pt]{extreport}
+\LoadClass[a4paper, 14pt]{extreport}
 
 \RequirePackage[T2A]{fontenc}
 \RequirePackage[utf8]{inputenc}
