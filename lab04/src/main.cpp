@@ -59,7 +59,7 @@ void sRunTests() {
 int main() {
 	sRunTests();
 
-	const std::vector<std::string> tokens = {"a", "and", "c", "xor", "(", "b", "or", "c", ")", "and", "1"};
+	const std::vector<std::string> tokens = {"a", "and", "c", "xor", "(", "b", "or", "c", ")", "*", "1"};
 	auto&& [f, r] = parse(tokens);
 	std::cout << std::endl;
 	for (auto& token : tokens) {

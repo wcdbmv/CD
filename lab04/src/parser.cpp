@@ -117,9 +117,9 @@ auto sMakeRelations() {
 				const auto isRightAssociativeOp = kRightAssociative.contains(op);
 				const auto isRightAssociativeOp_ = kRightAssociative.contains(op_);
 
-				if (prOp < prOp_ || (prOp == prOp_ && isRightAssociativeOp && isRightAssociativeOp_)) {
+				if (prOp > prOp_ || (prOp == prOp_ && isRightAssociativeOp && isRightAssociativeOp_)) {
 					relations[op][op_] = "<";
-				} else if (prOp > prOp_ || (prOp == prOp_ && !isRightAssociativeOp && !isRightAssociativeOp_)) {
+				} else if (prOp < prOp_ || (prOp == prOp_ && !isRightAssociativeOp && !isRightAssociativeOp_)) {
 					relations[op][op_] = ">";
 				}
 			}
